@@ -1,0 +1,66 @@
+﻿Build started 2014/12/20 22:56:32.
+     1>Project "F:\程序库\MO\程序\TransSimu_2\VS2013_MO_DEMO\VS2013_MO_DEMO.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _WINDOWS /D _DEBUG /D _AFXDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\VS2013_MO_DEMO.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt VS2013_MO_DEMOView.cpp
+         VS2013_MO_DEMOView.cpp
+       Link:
+         I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"F:\程序库\MO\程序\TransSimu_2\Debug\VS2013_MO_DEMO.exe" /INCREMENTAL /NOLOGO /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /manifestinput:"I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\Include\Manifest\dpiaware.manifest" /DEBUG /PDB:"F:\程序库\MO\程序\TransSimu_2\Debug\VS2013_MO_DEMO.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"F:\程序库\MO\程序\TransSimu_2\Debug\VS2013_MO_DEMO.lib" /MACHINE:X86 Debug\VS2013_MO_DEMO.res
+         Debug\MainFrm.obj
+         Debug\font.obj
+         Debug\map.obj
+         Debug\MapHelper.obj
+         Debug\moaddresslocation.obj
+         Debug\mochartrenderer.obj
+         Debug\moclassbreaksrenderer.obj
+         Debug\modataconnection.obj
+         Debug\modatum.obj
+         Debug\modotdensityrenderer.obj
+         Debug\moellipse.obj
+         Debug\moeventrenderer.obj
+         Debug\mofield.obj
+         Debug\mofields.obj
+         Debug\mogeocoder.obj
+         Debug\mogeocoordsys.obj
+         Debug\mogeodataset.obj
+         Debug\mogeodatasets.obj
+         Debug\mogeoevent.obj
+         Debug\mogeotransformation.obj
+         Debug\mogrouprenderer.obj
+         Debug\moimagelayer.obj
+         Debug\molabelplacer.obj
+         Debug\molabelrenderer.obj
+         Debug\molayers.obj
+         Debug\moline.obj
+         Debug\momaplayer.obj
+         Debug\moparts.obj
+         Debug\moplacelocator.obj
+         Debug\mopoint.obj
+         Debug\mopoints.obj
+         Debug\mopolygon.obj
+         Debug\moprimemeridian.obj
+         Debug\moprojcoordsys.obj
+         Debug\moprojection.obj
+         Debug\morecordset.obj
+         Debug\morectangle.obj
+         Debug\mospheroid.obj
+         Debug\mostandardizer.obj
+         Debug\mostatistics.obj
+         Debug\mostrings.obj
+         Debug\mosymbol.obj
+         Debug\motable.obj
+         Debug\motabledesc.obj
+         Debug\motextsymbol.obj
+         Debug\motrackinglayer.obj
+         Debug\mounit.obj
+         Debug\movaluemaprenderer.obj
+         Debug\mozrenderer.obj
+         Debug\stdafx.obj
+         Debug\VS2013_MO_DEMO.obj
+         Debug\VS2013_MO_DEMODoc.obj
+         Debug\VS2013_MO_DEMOView.obj
+         VS2013_MO_DEMO.vcxproj -> F:\程序库\MO\程序\TransSimu_2\Debug\VS2013_MO_DEMO.exe
+     1>Done Building Project "F:\程序库\MO\程序\TransSimu_2\VS2013_MO_DEMO\VS2013_MO_DEMO.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:01.79
