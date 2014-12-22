@@ -1,4 +1,4 @@
-﻿Build started 2014/12/22 1:18:52.
+﻿Build started 2014/12/22 13:51:03.
      1>Project "F:\程序库\MO\程序\TransSimu_2\VS2013_MO_DEMO\VS2013_MO_DEMO.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _WINDOWS /D _DEBUG /D _AFXDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\VS2013_MO_DEMO.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt VS2013_MO_DEMOView.cpp
@@ -63,4 +63,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.99
+Time Elapsed 00:00:00.66

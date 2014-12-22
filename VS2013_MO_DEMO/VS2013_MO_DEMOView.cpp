@@ -57,13 +57,14 @@ CVS2013_MO_DEMOView::CVS2013_MO_DEMOView()
 	m_color[4] = RGB(255, 0, 255);
 
 	// 初始化道路结构数据
-	m_crsRd.rd_wid = 3.5;
-	m_crsRd.rd_lnm = 3;
-	m_crsRd.rd_rnm = 3;
-	m_crsRd.rd_xlen = 200;
+	m_crsRd.rd_wid = 6;
+	m_crsRd.rd_lnm = 4;
+	m_crsRd.rd_rnm = 4;
+	m_crsRd.rd_xlen = 300;
 	m_crsRd.rd_ylen = 200;
-	m_crsRd.rd_sidwk_wid = 5;
+	m_crsRd.rd_sidwk_wid = 8;
 	m_crsRd.rd_arc = m_crsRd.rd_sidwk_wid;
+	m_crsRd.rd_cen_wid = 1.5;
 
 	// 开辟对象空间
 	m_lyrNum = LAYER_NUM;
@@ -568,24 +569,33 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 			return FALSE;
 	}
 
-	// 每一层的命名
-	CMoGeoDataset geoDataset(m_dataCon[0].AddGeoDataset("中心线", moShapeTypeLine,
-		(LPDISPATCH)m_desc[0], vt, vt));
+	// 命名每一层的数据文件名
+	CMoGeoDataset geoDataset[LAYER_NUM];
+	geoDataset[0] = m_dataCon[0].AddGeoDataset("中心线_双黄线", moShapeTypeLine,
+		(LPDISPATCH)m_desc[0], vt, vt);
+	geoDataset[1] = m_dataCon[1].AddGeoDataset("道路", moShapeTypeLine,
+		(LPDISPATCH)m_desc[1], vt, vt);
+	geoDataset[2] = m_dataCon[2].AddGeoDataset("人行道", moPolygon,
+		(LPDISPATCH)m_desc[2], vt, vt);
+	geoDataset[3] = m_dataCon[3].AddGeoDataset("外围", moPolygon,
+		(LPDISPATCH)m_desc[3], vt, vt);
 
 	// 设置图层的属性及数据
 	/// 第一层
-	CMoLine   ln[4];	// 4 条线
-	CMoPoints pts[2];	// 2 个多点
-	CMoPoint  pt[4];	// 4 个单点
+	CMoLine   lnCntre[4];			// 4 条线
+	CMoPoints pts[2], pts2[2];	// 2 个多点(第一层第二层的点)
+	CMoPoint  pt[4];			// 4 个单点
 	for (int i = 0; i < 4; ++i)
-		ln[i].CreateDispatch("MapObjects2.Line");
-	for (int i = 0; i < 2; ++i)
+		lnCntre[i].CreateDispatch("MapObjects2.Line");
+	for (int i = 0; i < 2; ++i){
 		pts[i].CreateDispatch("MapObjects2.Points");
+		pts2[i].CreateDispatch("MapObjects2.Points");
+	}
 	for (int i = 0; i < 4; ++i)
 		pt[i].CreateDispatch("MapObjects2.Point");
 
 	// 线的数据设定（通过 Parts Points 对象设置）
-	int wid = 2;	// 双黄线宽度
+	float wid = m_crsRd.rd_cen_wid;	// 双黄线宽度
 	pt[0].SetX(0);
 	pt[0].SetY(m_crsRd.rd_ylen / 2);
 	pt[1].SetX(m_crsRd.rd_xlen);
@@ -601,30 +611,213 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 	pts[1].Add(pt[2]);
 	pts[1].Add(pt[3]);	// 点串
 
-	ln[0].GetParts().Add(pts[0]);	// 第一条线段
-	ln[1].GetParts().Add(pts[0]);	// 第二条线段
-	ln[2].GetParts().Add(pts[1]);	// 第三条线段
-	ln[3].GetParts().Add(pts[1]);	// 第四条线段
-	ln[0].Offset(0, wid / 2);
-	ln[1].Offset(0, -wid / 2);
-	ln[2].Offset(wid / 2, 0);
-	ln[3].Offset(-wid / 2, 0);
+	lnCntre[0].GetParts().Add(pts[0]);	// 第一条线段
+	lnCntre[1].GetParts().Add(pts[0]);	// 第二条线段
+	lnCntre[2].GetParts().Add(pts[1]);	// 第三条线段
+	lnCntre[3].GetParts().Add(pts[1]);	// 第四条线段
+	lnCntre[0].Offset(0, wid / 2);
+	lnCntre[1].Offset(0, -wid / 2);
+	lnCntre[2].Offset(wid / 2, 0);
+	lnCntre[3].Offset(-wid / 2, 0);
+
+	/// 第二层
+	int dashRdNum = 4 * (m_crsRd.rd_lnm + m_crsRd.rd_rnm - 2);
+	CMoLine   *lnDash = new CMoLine[dashRdNum];
+	for (int i = 0; i < dashRdNum; ++i)
+		lnDash[i].CreateDispatch("MapObjects2.Line");
+
+	pt[0].SetX(0);
+	pt[0].SetY(m_crsRd.rd_ylen / 2);
+	pt[1].SetX(m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid);
+	pt[1].SetY(m_crsRd.rd_ylen / 2);
+	pt[2].SetX(m_crsRd.rd_xlen / 2);
+	pt[2].SetY(0);
+	pt[3].SetX(m_crsRd.rd_xlen / 2);
+	pt[3].SetY(m_crsRd.rd_ylen / 2 - m_crsRd.rd_rnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid);
+
+	
+	pts2[0].Add(pt[0]);
+	pts2[0].Add(pt[1]);	// 点串
+	pts2[1].Add(pt[2]);
+	pts2[1].Add(pt[3]);	// 点串
+	
+	for (int i = 0; i < dashRdNum; ++i){
+		if ((dashRdNum / 4) % 2 == 1) continue;
+		if (i < dashRdNum / 2)
+			lnDash[i].GetParts().Add(pts2[0]);
+		else
+			lnDash[i].GetParts().Add(pts2[1]);
+	}
+	for (int i = 0; i < dashRdNum / 2; ++i){
+		if (i < dashRdNum / 8)
+			lnDash[i].Offset(0, (i + 1)*m_crsRd.rd_wid);
+		else if (i < dashRdNum / 4)
+			lnDash[i].Offset(0, -(i + 1 - dashRdNum / 8)*m_crsRd.rd_wid);
+		else if (i < 3 * dashRdNum / 8)
+			lnDash[i].Offset(m_crsRd.rd_xlen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid, 
+							(i + 1-dashRdNum/4)*m_crsRd.rd_wid);
+		else
+			lnDash[i].Offset(m_crsRd.rd_xlen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid,
+				-(i + 1 - 3*dashRdNum / 8)*m_crsRd.rd_wid);
+	}
+
+	for (int i = dashRdNum / 2; i < dashRdNum; ++i){
+		if (i < 5 * dashRdNum / 8)
+			lnDash[i].Offset((i + 1 - dashRdNum / 2)*m_crsRd.rd_wid, 0);
+		else if (i < 6 * dashRdNum / 8)
+			lnDash[i].Offset(-(i + 1 - 5 * dashRdNum / 8)*m_crsRd.rd_wid, 0);
+		else if (i < 7* dashRdNum / 8)
+			lnDash[i].Offset((i + 1 - 6 * dashRdNum / 8)*m_crsRd.rd_wid, 
+				m_crsRd.rd_ylen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid);
+		else
+			lnDash[i].Offset(-(i + 1 - 7 * dashRdNum / 8)*m_crsRd.rd_wid, 
+				m_crsRd.rd_ylen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid);
+	}
+
+	/// 第三层（人行道）
+	int walkRdNum = 4;
+	CMoPoint ptWalk[4];
+	CMoPoints ptsWalk[2];
+	CMoPolygon poWalk[4];
+	for (int i = 0; i < 4; ++i)
+		ptWalk[i].CreateDispatch("MapObjects2.Point");
+	for (int i = 0; i < 2; ++i)
+		ptsWalk[i].CreateDispatch("MapObjects2.Points");
+	for (int i = 0; i < 4; ++i)
+		poWalk[i].CreateDispatch("MapObjects2.Polygon");
+	ptWalk[0].SetX(m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid);
+	ptWalk[0].SetY(m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid);
+	ptWalk[1].SetX(m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid);
+	ptWalk[1].SetY(m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid);
+	ptWalk[2].SetX(m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid);
+	ptWalk[2].SetY(m_crsRd.rd_ylen / 2 + m_crsRd.rd_lnm*m_crsRd.rd_wid);
+	ptWalk[3].SetX(m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid);
+	ptWalk[3].SetY(m_crsRd.rd_ylen / 2 + m_crsRd.rd_lnm*m_crsRd.rd_wid);
+
+	for (int i = 0; i < 4; ++i)
+		ptsWalk[0].Add(ptWalk[i]);
+
+	poWalk[0].GetParts().Add(ptsWalk[0]);
+	poWalk[1].GetParts().Add(ptsWalk[0]);
+	poWalk[1].Offset(m_crsRd.rd_sidwk_wid + (m_crsRd.rd_lnm + m_crsRd.rd_rnm)*m_crsRd.rd_wid, 0);
+
+	ptWalk[0].SetX(m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid);
+	ptWalk[0].SetY(m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid);
+	ptWalk[1].SetX(m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid + (m_crsRd.rd_lnm + m_crsRd.rd_rnm)*m_crsRd.rd_wid);
+	ptWalk[1].SetY(m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid);
+	ptWalk[2].SetX(m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid + (m_crsRd.rd_lnm + m_crsRd.rd_rnm)*m_crsRd.rd_wid);
+	ptWalk[2].SetY(m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid + m_crsRd.rd_sidwk_wid);
+	ptWalk[3].SetX(m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid);
+	ptWalk[3].SetY(m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid + m_crsRd.rd_sidwk_wid);
+	for (int i = 0; i < 4; ++i)
+		ptsWalk[1].Add(ptWalk[i]);
+	poWalk[2].GetParts().Add(ptsWalk[1]);
+	poWalk[3].GetParts().Add(ptsWalk[1]);
+	poWalk[3].Offset(0, m_crsRd.rd_sidwk_wid + (m_crsRd.rd_lnm + m_crsRd.rd_rnm)*m_crsRd.rd_wid);
+
+
+	/// 第四层
+	CMoPoint ptBord[204];
+	CMoPoints ptsBord[4];
+	CMoPolygon poBord[4];
+	for (int i = 0; i < 204; ++i)
+		ptBord[i].CreateDispatch("MapObjects2.Point");
+	for (int i = 0; i < 4; ++i)
+		ptsBord[i].CreateDispatch("MapObjects2.Points");
+	for (int i = 0; i < 4; ++i)
+		poBord[i].CreateDispatch("MapObjects2.Polygon");
+
+	// x y 为圆心
+	float x = m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid * 2;
+	float y = m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid * 2;
+	ptBord[0].SetX(0);
+	ptBord[0].SetY(y + 2*m_crsRd.rd_sidwk_wid);
+	ptBord[1].SetX(0);
+	ptBord[1].SetY(y + m_crsRd.rd_sidwk_wid);
+	for (int i = 0; i < 100; ++i){
+		ptBord[i + 2].SetX(x + m_crsRd.rd_sidwk_wid*sin(i / 100.0*PI / 2.0));
+		ptBord[i + 2].SetY(y + m_crsRd.rd_sidwk_wid*cos(i / 100.0*PI / 2.0));
+	}
+	ptBord[102].SetX(x + m_crsRd.rd_sidwk_wid);
+	ptBord[102].SetY(0);
+	ptBord[103].SetX(x + 2 * m_crsRd.rd_sidwk_wid);
+	ptBord[103].SetY(0);
+
+	x += m_crsRd.rd_sidwk_wid;
+	y += m_crsRd.rd_sidwk_wid;
+	for (int i = 0; i < 100; ++i){
+		ptBord[i + 104].SetX(x + m_crsRd.rd_sidwk_wid*cos(i / 100.0*PI / 2.0));
+		ptBord[i + 104].SetY(y + m_crsRd.rd_sidwk_wid*sin(i / 100.0*PI / 2.0));
+	}
+	
+	for (int i = 0; i < 204; ++i)
+		ptsBord[0].Add(ptBord[i]);
+	poBord[0].GetParts().Add(ptsBord[0]);
+
+	/// 镜像对称
+	for (int i = 0; i < 204; ++i)
+		ptBord[i].SetX(m_crsRd.rd_xlen - ptBord[i].GetX());
+	for (int i = 0; i < 204; ++i)
+		ptsBord[1].Add(ptBord[i]);
+	poBord[1].GetParts().Add(ptsBord[1]);
+
+	for (int i = 0; i < 204; ++i)
+		ptBord[i].SetY(m_crsRd.rd_ylen - ptBord[i].GetY());
+	for (int i = 0; i < 204; ++i)
+		ptsBord[2].Add(ptBord[i]);
+	poBord[2].GetParts().Add(ptsBord[2]);
+
+	for (int i = 0; i < 204; ++i)
+		ptBord[i].SetX(m_crsRd.rd_xlen - ptBord[i].GetX());
+	for (int i = 0; i < 204; ++i)
+		ptsBord[3].Add(ptBord[i]);
+	poBord[3].GetParts().Add(ptsBord[3]);
 
 
 	// 往记录集写入数据
-	m_layer[0].SetGeoDataset(geoDataset);
-	CMoRecordset recs(m_layer[0].GetRecords());	// 图层的记录集
+	for (unsigned int i = 0; i < m_lyrNum; ++i){
+		m_layer[i].SetGeoDataset(geoDataset[i]);
+	}
+	CMoRecordset recs(m_layer[0].GetRecords());	// 第一图层的记录集
 	for (int i = 0; i < 4; ++i){
 		recs.AddNew();
-		SetValue(recs.GetFields(), "Shape", ln[i]);
+		SetValue(recs.GetFields(), "Shape", lnCntre[i]);
 		recs.Update();
 	}
-
+	recs = m_layer[1].GetRecords();	// 第二图层的记录集
+	for (int i = 0; i < dashRdNum; ++i){
+		recs.AddNew();
+		SetValue(recs.GetFields(), "Shape", lnDash[i]);
+		recs.Update();
+	}
+	recs = m_layer[2].GetRecords();	// 第三图层的记录集
+	for (int i = 0; i < walkRdNum; ++i){
+		recs.AddNew();
+		SetValue(recs.GetFields(), "Shape", poWalk[i]);
+		recs.Update();
+	}
+	recs = m_layer[3].GetRecords();	// 第四图层的记录集
+	for (int i = 0; i < 4; ++i){
+		recs.AddNew();
+		SetValue(recs.GetFields(), "Shape", poBord[i]);
+		recs.Update();
+	}
 	// 设置符号及刷新
 	m_layer[0].GetSymbol().SetSize(2);
 	m_layer[0].GetSymbol().SetColor(RGB(255, 251, 134));
+	m_layer[1].GetSymbol().SetSize(1);
+	m_layer[1].GetSymbol().SetColor(RGB(255, 255, 255));
+	m_layer[1].GetSymbol().SetStyle(moDashLine);
+	m_layer[2].GetSymbol().SetColor(RGB(255, 255, 255));
+	m_layer[2].GetSymbol().SetStyle(moDownwardDiagonalFill);
+	//m_layer[3].GetSymbol().SetColor(RGB(0, 255, 0));
+	//m_layer[3].GetSymbol().SetStyle(moDiagonalCrossFill);
+	m_layer[3].GetSymbol().SetStyle(moGrayFill);
+
 	CMoLayers layers(m_map.GetLayers());
-	layers.Add(m_layer[0]);
+	for (unsigned int i = 0; i < m_lyrNum; ++i)
+		layers.Add(m_layer[i]);
+	m_map.SetBackColor(RGB(0, 0, 0));
 	m_map.Refresh();
 
 	return TRUE;
