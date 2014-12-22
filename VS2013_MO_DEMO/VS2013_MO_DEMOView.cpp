@@ -49,25 +49,44 @@ END_MESSAGE_MAP()
 CVS2013_MO_DEMOView::CVS2013_MO_DEMOView()
 	: CFormView(CVS2013_MO_DEMOView::IDD)
 {
-	// TODO: add construction code here
+	// 设定几个颜色值
 	m_color[0] = RGB(255, 0, 0);
 	m_color[1] = RGB(0, 255, 0);
 	m_color[2] = RGB(0, 0, 255);
 	m_color[3] = RGB(255, 255, 0);
 	m_color[4] = RGB(255, 0, 255);
 
-	// 测试
-	for (int i = 0; i < 10; ++i){
-		m_number.Add("1");
-		m_name.Add("100");
-	}
+	// 初始化道路结构数据
+	m_crsRd.rd_wid = 3.5;
+	m_crsRd.rd_lnm = 3;
+	m_crsRd.rd_rnm = 3;
+	m_crsRd.rd_xlen = 200;
+	m_crsRd.rd_ylen = 200;
+	m_crsRd.rd_sidwk_wid = 5;
+	m_crsRd.rd_arc = m_crsRd.rd_sidwk_wid;
+
+	// 开辟对象空间
+	m_lyrNum = LAYER_NUM;
+	m_dataCon = new CMoDataConnection[m_lyrNum];
+	m_desc = new CMoTableDesc[m_lyrNum];
+	m_layer = new CMoMapLayer[m_lyrNum];
+
+	//// 测试
+	//for (int i = 0; i < 10; ++i){
+	//	m_number.Add("1");
+	//	m_name.Add("100");
+	//}
 }
 
 CVS2013_MO_DEMOView::~CVS2013_MO_DEMOView()
 {
+	// 释放在构造函数里创建的空间
 	if (m_trackPts) delete[] m_trackPts;
 	if (m_curPtIndex) delete[] m_curPtIndex;
 	if (m_curGeoEvent) delete[] m_curGeoEvent;
+	if (m_dataCon) delete[] m_dataCon;
+	if (m_desc) delete[] m_desc;
+	if (m_layer) delete[] m_layer;
 }
 
 void CVS2013_MO_DEMOView::DoDataExchange(CDataExchange* pDX)
@@ -439,146 +458,174 @@ void CVS2013_MO_DEMOView::initMap()
 // 自动画十字路口道路
 void CVS2013_MO_DEMOView::OnOpetationAutodraw()
 {
-	createNewLayer();
-	//// 添加点数据到容器
-	//CMoPoint pt[10];
-	//for (int i = 0; i < 10; ++i){
-	//	pt[i].SetX(10 * i);
-	//	pt[i].SetY(10 * i);
-	//	m_pointArray.Add(pt[i]);
-	//}
-
-	//// 创建属性表 shape moPoint 貌似不能被创建，无效
-	///*CMoTableDesc tbl;
-	//tbl.CreateDispatch(TEXT("MapObjects2.TableDesc"));
-	//tbl.SetFieldCount(1);
-	//tbl.SetFieldName(0, TEXT("shape"));
-	//tbl.SetFieldType(0, 21);*/
-	//CMoTableDesc desc;
-	//desc.CreateDispatch(TEXT("MapObjects2.TableDesc"));
-
-	//// 创建图层、记录集、添加数据
-	//CMoMapLayer lyr;
-	//lyr.CreateDispatch(TEXT("MapObjects2.MapLayer"));
-	//CMoRecordset rec(lyr.GetRecords());
-	//rec.SetTableDesc(desc);
-	////rec.Update();
-
-	//for (int i = 0; i < m_pointArray.GetSize(); ++i){
-	//	rec.AddNew();
-	//	CMoFields flds =  rec.GetFields();	// 此时 flds 为空，无法写入
-	//	SetValue(rec.GetFields(), TEXT("shape"), m_pointArray[i]);
-	//	rec.Update();
-	//}
-
-	//// 图层到 m_map 
-	//lyr.SetRecords(rec);
-	//m_map.SetLayers(lyr);
-	//m_map.Refresh();
-	////// 创建图层、记录集、添加数据
-	////CMoMapLayer lyr;
-	////CMoRecordset rec; // (lyr.GetRecords());
-	//////rec.SetAutoFlush(FALSE);			// 每步修改是否立即完成自动更新
-
-	////CMoFields flds;
-	////CMoField fld;
-	////fld.SetName(TEXT("shape")); // 设置名字
-	////fld.SetType(moPoint);		// 设置类型
-
-	////int rec_num = rec.GetCount();
-	////rec.AddNew();
-	////rec_num = rec.GetCount();
-	////
-
-	////for (int i = 0; i < m_pointArray.GetSize(); ++i){
-	////	rec.AddNew();
-	////	CMoFields flds =  rec.GetFields();	// 此时 flds 为空，无法写入
-	////	SetValue(rec.GetFields(), TEXT("shape"), m_pointArray[i]);
-	////	rec.Update();
-	////}
-	////m_map.SetLayers(lyr);
+	//createNewLayer();
+	createCrossRoad();
 }
 
 BOOL CVS2013_MO_DEMOView::createNewLayer()
 {
-	if (!pMoCon.CreateDispatch(TEXT("MapObjects2.DataConnection")))
-		return FALSE;
-	if (!desc.CreateDispatch("MapObjects2.TableDesc"))
-		return FALSE;
+	//if (!m_dataCon.CreateDispatch(TEXT("MapObjects2.DataConnection")))
+	//	return FALSE;
+	//if (!m_desc.CreateDispatch("MapObjects2.TableDesc"))
+	//	return FALSE;
+	//VARIANT vt;
+	//vt.vt = VT_BOOL;
+	//vt.boolVal = VARIANT_FALSE;
+	//m_dataCon.SetDatabase((LPCTSTR)"F:\\程序库\\MO\\数据\\ArcInfo\\test"); //设置图层保存目录
+	//if (!m_dataCon.Connect())
+	//	return FALSE;
+
+	//// 设置图层的字段个数及属性，这里设置两个，一个为Number，一个为Name。表示点的号码及名称。
+	//m_desc.SetFieldCount(2);
+	//m_desc.SetFieldName(0, "Number"); // 名字
+	//m_desc.SetFieldType(0, moDouble); // 类别
+	//m_desc.SetFieldLength(0, 10);		// 长度
+	//m_desc.SetFieldPrecision(0, 10);	// 位数（数值）
+	//m_desc.SetFieldScale(0, 5);		// 小数位数
+
+	//m_desc.SetFieldName(1, "Name");
+	//m_desc.SetFieldType(1, moDouble);
+	//m_desc.SetFieldLength(1, 10);
+	//m_desc.SetFieldPrecision(1, 10);	
+	//m_desc.SetFieldScale(1, 5);		
+
+	//// 创建新图层,设置名称、类型及字段。
+	//CMoGeoDataset geoDataset(m_dataCon.AddGeoDataset("测试_点", moShapeTypePoint,
+	//	(LPDISPATCH)m_desc, vt, vt));
+	//if (!m_layer.CreateDispatch(TEXT("MapObjects2.MapLayer")))
+	//	return FALSE;
+
+	//// 设置图层的记录集
+	////CMoPoint* pt = new CMoPoint[10];
+	//CMoPoint pt[10];
+	//for (int i = 0; i < 10; ++i){
+	//	pt[i].CreateDispatch("MapObjects2.Point");
+	//	//CMoPoint pt_tmp = m_map.ToMapPoint(i, i);
+	//	pt[i].SetX(float(10 * (i + 1)));	// 点数据随便设置
+	//	pt[i].SetY(float(10 * (i + 1)));
+	//	m_pointArray.Add(pt[i]);
+	//}
+
+	//m_layer.SetGeoDataset(geoDataset);
+	//CMoRecordset recs(m_layer.GetRecords());
+
+	//// 索引变量
+	//VARIANT test_idx;
+	//VariantInit(&test_idx);
+	//test_idx.vt = VT_I4;
+
+	//long edit_sta = recs.GetEditMode();
+	//for (int i = 0; i < m_pointArray.GetSize(); ++i){
+	//	recs.AddNew();
+	//	edit_sta = recs.GetEditMode();
+	//	SetValue(recs.GetFields(), "Shape", pt[i]);
+	//	SetValue(recs.GetFields(), "Number", 1.0);
+	//	SetValue(recs.GetFields(), "Name", 2.0);
+
+	//	recs.Update();
+	//}
+	//
+
+	////测试
+	//test_idx.lVal = 0;
+	//edit_sta = recs.GetEditMode();
+	//long rec_cnt = recs.GetCount();
+	//CMoField fld(recs.GetFields().Item(test_idx));
+	//CString rec_nm = fld.GetName();
+
+	//long test_tpe = m_layer.GetShapeType();
+
+
+	////设置点的颜色，并加入地图。
+	//m_layer.GetSymbol().SetColor(moRed);
+	//m_layer.GetSymbol().SetSize(10);
+	//CMoLayers layers(m_map.GetLayers());
+	//layers.Add(m_layer);
+
+	//m_map.Refresh();
+	return TRUE;
+}
+
+BOOL CVS2013_MO_DEMOView::createCrossRoad()
+{
+	// 从底层创建相关 MO 对象
+	for (unsigned int i = 0; i < m_lyrNum; ++i){
+		if (!m_dataCon[i].CreateDispatch(TEXT("MapObjects2.DataConnection")))
+			return FALSE;
+		if (!m_desc[i].CreateDispatch("MapObjects2.TableDesc"))
+			return FALSE;
+		if (!m_layer[i].CreateDispatch("MapObjects2.MapLayer"))
+			return FALSE;
+	}
+
+	// 连接数据
 	VARIANT vt;
 	vt.vt = VT_BOOL;
 	vt.boolVal = VARIANT_FALSE;
-	pMoCon.SetDatabase((LPCTSTR)"F:\\程序库\\MO\\数据\\ArcInfo\\test"); //设置图层保存目录
-	if (!pMoCon.Connect())
-		return FALSE;
-
-	// 设置图层的字段个数及属性，这里设置两个，一个为Number，一个为Name。表示点的号码及名称。
-	desc.SetFieldCount(2);
-	desc.SetFieldName(0, "Number"); // 名字
-	desc.SetFieldType(0, moDouble); // 类别
-	desc.SetFieldLength(0, 10);		// 长度
-	desc.SetFieldPrecision(0, 10);	// 位数（数值）
-	desc.SetFieldScale(0, 5);		// 小数位数
-
-	desc.SetFieldName(1, "Name");
-	desc.SetFieldType(1, moDouble);
-	desc.SetFieldLength(1, 10);
-	desc.SetFieldPrecision(1, 10);	
-	desc.SetFieldScale(1, 5);		
-
-	// 创建新图层,设置名称、类型及字段。
-	CMoGeoDataset geoDataset(pMoCon.AddGeoDataset("测试_点", moShapeTypePoint,
-		(LPDISPATCH)desc, vt, vt));
-	if (!layer.CreateDispatch(TEXT("MapObjects2.MapLayer")))
-		return FALSE;
-
-	// 设置图层的记录集
-	//CMoPoint* pt = new CMoPoint[10];
-	CMoPoint pt[10];
-	for (int i = 0; i < 10; ++i){
-		pt[i].CreateDispatch("MapObjects2.Point");
-		//CMoPoint pt_tmp = m_map.ToMapPoint(i, i);
-		pt[i].SetX(float(10 * (i + 1)));	// 点数据随便设置
-		pt[i].SetY(float(10 * (i + 1)));
-		m_pointArray.Add(pt[i]);
+	for (unsigned int i = 0; i < m_lyrNum; ++i){
+		m_dataCon[i].SetDatabase((LPCTSTR)"F:\\程序库\\MO\\数据\\ArcInfo\\十字路口"); //设置图层保存目录
+		if (!m_dataCon[i].Connect())
+			return FALSE;
 	}
 
-	layer.SetGeoDataset(geoDataset);
-	CMoRecordset recs(layer.GetRecords());
+	// 每一层的命名
+	CMoGeoDataset geoDataset(m_dataCon[0].AddGeoDataset("中心线", moShapeTypeLine,
+		(LPDISPATCH)m_desc[0], vt, vt));
 
-	// 索引变量
-	VARIANT test_idx;
-	VariantInit(&test_idx);
-	test_idx.vt = VT_I4;
+	// 设置图层的属性及数据
+	/// 第一层
+	CMoLine   ln[4];	// 4 条线
+	CMoPoints pts[2];	// 2 个多点
+	CMoPoint  pt[4];	// 4 个单点
+	for (int i = 0; i < 4; ++i)
+		ln[i].CreateDispatch("MapObjects2.Line");
+	for (int i = 0; i < 2; ++i)
+		pts[i].CreateDispatch("MapObjects2.Points");
+	for (int i = 0; i < 4; ++i)
+		pt[i].CreateDispatch("MapObjects2.Point");
 
-	long edit_sta = recs.GetEditMode();
-	for (int i = 0; i < m_pointArray.GetSize(); ++i){
+	// 线的数据设定（通过 Parts Points 对象设置）
+	int wid = 2;	// 双黄线宽度
+	pt[0].SetX(0);
+	pt[0].SetY(m_crsRd.rd_ylen / 2);
+	pt[1].SetX(m_crsRd.rd_xlen);
+	pt[1].SetY(m_crsRd.rd_ylen / 2);
+	pt[2].SetX(m_crsRd.rd_xlen / 2);
+	pt[2].SetY(0);
+	pt[3].SetX(m_crsRd.rd_xlen / 2);
+	pt[3].SetY(m_crsRd.rd_ylen);
+
+
+	pts[0].Add(pt[0]);
+	pts[0].Add(pt[1]);	// 点串
+	pts[1].Add(pt[2]);
+	pts[1].Add(pt[3]);	// 点串
+
+	ln[0].GetParts().Add(pts[0]);	// 第一条线段
+	ln[1].GetParts().Add(pts[0]);	// 第二条线段
+	ln[2].GetParts().Add(pts[1]);	// 第三条线段
+	ln[3].GetParts().Add(pts[1]);	// 第四条线段
+	ln[0].Offset(0, wid / 2);
+	ln[1].Offset(0, -wid / 2);
+	ln[2].Offset(wid / 2, 0);
+	ln[3].Offset(-wid / 2, 0);
+
+
+	// 往记录集写入数据
+	m_layer[0].SetGeoDataset(geoDataset);
+	CMoRecordset recs(m_layer[0].GetRecords());	// 图层的记录集
+	for (int i = 0; i < 4; ++i){
 		recs.AddNew();
-		edit_sta = recs.GetEditMode();
-		SetValue(recs.GetFields(), "Shape", pt[i]);
-		SetValue(recs.GetFields(), "Number", 1.0);
-		SetValue(recs.GetFields(), "Name", 2.0);
-
+		SetValue(recs.GetFields(), "Shape", ln[i]);
 		recs.Update();
 	}
-	
 
-	//测试
-	test_idx.lVal = 0;
-	edit_sta = recs.GetEditMode();
-	long rec_cnt = recs.GetCount();
-	CMoField fld(recs.GetFields().Item(test_idx));
-	CString rec_nm = fld.GetName();
-
-	long test_tpe = layer.GetShapeType();
-
-
-	//设置点的颜色，并加入地图。
-	layer.GetSymbol().SetColor(moRed);
-	layer.GetSymbol().SetSize(10);
+	// 设置符号及刷新
+	m_layer[0].GetSymbol().SetSize(2);
+	m_layer[0].GetSymbol().SetColor(RGB(255, 251, 134));
 	CMoLayers layers(m_map.GetLayers());
-	layers.Add(layer);
-
+	layers.Add(m_layer[0]);
 	m_map.Refresh();
+
 	return TRUE;
 }

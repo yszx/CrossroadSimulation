@@ -18,13 +18,19 @@ class CVS2013_MO_DEMOView : public CFormView
 	//  [12/20/2014 guojianzhu]
 	// 4. 自动生成道路数据
 public:
-	CMoDataConnection pMoCon;
-	CMoTableDesc desc;
-	CMoMapLayer layer;
-	CStringArray m_name;
-	CStringArray m_number;
+	//  [12/21/2014 guojianzhu]
+	CrossRoad m_crsRd;	// 道路数据结构体
 
-	BOOL createNewLayer();
+	unsigned int		m_lyrNum;	// 图层个数
+	CMoDataConnection*	m_dataCon;
+	CMoTableDesc*		m_desc;
+	CMoMapLayer*		m_layer;
+	// 测试成员
+	/*CStringArray m_name;
+	CStringArray m_number;*/
+
+	BOOL createCrossRoad();	// 创建十字路口道路数据，结合 m_crsRd
+	BOOL createNewLayer();	// 创建图层函数，用于测试
 	void getTrackPoints(); // 获取移动的点
 	void initMap();		// 初始化参数（使用 CMoTrackLayer 挂接动态数据，在getTrackPoints后调用）
 	void showRoad();	// 显示底层道路
@@ -42,11 +48,14 @@ public:
 	//CTypedPtrArray<CPtrArray, CMoLine> m_lineArray;			// 线
 	//CTypedPtrArray<CPtrArray, CMoPolygon> m_polygonArray;	// 面
 
+	// 构造函数
+protected: 
+	CVS2013_MO_DEMOView();
+	// 析构函数
+public:
+	virtual ~CVS2013_MO_DEMOView();
 public:
 	CMoPoint pt; 
-
-protected: // create from serialization only
-	CVS2013_MO_DEMOView();
 	
 	DECLARE_DYNCREATE(CVS2013_MO_DEMOView)
 
@@ -67,9 +76,6 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual void OnInitialUpdate(); // called first time after construct
 
-// Implementation
-public:
-	virtual ~CVS2013_MO_DEMOView();
 
 #ifdef _DEBUG
 	virtual void AssertValid() const;

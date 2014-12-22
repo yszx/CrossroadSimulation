@@ -5,6 +5,7 @@
 
 // 一些自定义常量和头文件
 #define COLOR_NUM 5	// 颜色种类，颜色数组在 view 的构造函数里
+#define LAYER_NUM 1	// 十字路口的图层数目
 
 struct CrossRoad
 {
@@ -12,6 +13,7 @@ struct CrossRoad
 	int rd_lnm, rd_rnm;			// 左右道路的道路数
 	float rd_xlen, rd_ylen;		// x y 方向上的长度
 	float rd_sidwk_wid;			// 人行道宽度
+	float rd_arc;				// 圆角半径，默认等于人行道宽度
 };
 
 
