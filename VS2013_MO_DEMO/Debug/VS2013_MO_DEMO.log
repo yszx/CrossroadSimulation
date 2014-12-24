@@ -1,8 +1,12 @@
-﻿Build started 2014/12/22 13:51:03.
+﻿Build started 2014/12/24 18:42:44.
      1>Project "F:\程序库\MO\程序\TransSimu_2\VS2013_MO_DEMO\VS2013_MO_DEMO.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _WINDOWS /D _DEBUG /D _AFXDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\VS2013_MO_DEMO.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt VS2013_MO_DEMOView.cpp
+         I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _WINDOWS /D _DEBUG /D _AFXDLL /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Debug\VS2013_MO_DEMO.pch" /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt VS2013_MO_DEMO.cpp VS2013_MO_DEMOView.cpp
          VS2013_MO_DEMOView.cpp
+         Generating Code...
+         Compiling...
+         VS2013_MO_DEMO.cpp
+         Generating Code...
        Link:
          I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"F:\程序库\MO\程序\TransSimu_2\Debug\VS2013_MO_DEMO.exe" /INCREMENTAL /NOLOGO /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /manifestinput:"I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\Include\Manifest\dpiaware.manifest" /DEBUG /PDB:"F:\程序库\MO\程序\TransSimu_2\Debug\VS2013_MO_DEMO.pdb" /SUBSYSTEM:WINDOWS /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"F:\程序库\MO\程序\TransSimu_2\Debug\VS2013_MO_DEMO.lib" /MACHINE:X86 Debug\VS2013_MO_DEMO.res
          Debug\MainFrm.obj
@@ -63,4 +67,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.66
+Time Elapsed 00:00:01.70

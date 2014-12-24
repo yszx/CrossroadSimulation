@@ -8,7 +8,6 @@
 #include "MO Commons/map.h"
 #include "ATRNS_SIMU.h"
 
-
 class CVS2013_MO_DEMOView : public CFormView
 {
 	//  [12/17/2014 guojianzhu]
@@ -18,6 +17,9 @@ class CVS2013_MO_DEMOView : public CFormView
 	//  [12/20/2014 guojianzhu]
 	// 4. 自动生成道路数据
 public:
+	//  [12/24/2014 guojianzhu]
+	vector<CMoPoints>	m_TrackPoints;	// 轨迹点
+
 	//  [12/21/2014 guojianzhu]
 	CrossRoad m_crsRd;	// 道路数据结构体
 
@@ -29,18 +31,26 @@ public:
 	/*CStringArray m_name;
 	CStringArray m_number;*/
 
+	//  [12/24/2014 guojianzhu]
+	/* 辅助函数
+	* 说明：中心对称函数
+	* 功能：参数为已有的线对象，中心点坐标，返回一个线对象
+	*/
+	CMoLine centroSymmetric(CMoLine& l, float x, float y);				// 中心对称
+	CMoLine rotoffSymmetric(CMoLine& l, float x, float y, double ang);	// 旋转平移
+	void initMap2();	// 初始化一些参数
+
+	BOOL getTrackLine();	// 获得十字路口的跟踪线
 	BOOL createCrossRoad();	// 创建十字路口道路数据，结合 m_crsRd
 	BOOL createNewLayer();	// 创建图层函数，用于测试
-	void getTrackPoints(); // 获取移动的点
-	void initMap();		// 初始化参数（使用 CMoTrackLayer 挂接动态数据，在getTrackPoints后调用）
-	void showRoad();	// 显示底层道路
+	void getTrackPoints();	// 获取移动的点
+	void initMap();			// 初始化参数（使用 CMoTrackLayer 挂接动态数据，在getTrackPoints后调用）
+	void showRoad();		// 显示底层道路
 	void usingMoSymbol(CMoMapLayer m_MapLayer, COLORREF r, int sz, int style);	// 设置地图符号
 
 	CMoPoints*   m_trackPts;		// 动态数据的轨迹
 	long*		 m_curPtIndex;		// 当前点的索引号
 	CMoGeoEvent* m_curGeoEvent;		// 当前点事件
-
-	COLORREF	 m_color[COLOR_NUM];		// 颜色数组
 
 	unsigned int m_trackPtsNum; // 挂接的点的数目（即道路线的数目）
 
@@ -99,7 +109,12 @@ public:
 	afx_msg void OnOpetationStart();
 	afx_msg void OnOpetationStop();
 	afx_msg void OnOpetationAutodraw();
+	afx_msg void OnTestGettrackline();
 };
+
+
+
+
 
 #ifndef _DEBUG  // debug version in VS2013_MO_DEMOView.cpp
 inline CVS2013_MO_DEMODoc* CVS2013_MO_DEMOView::GetDocument() const
