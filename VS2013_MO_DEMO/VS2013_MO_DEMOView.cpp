@@ -50,44 +50,6 @@ END_MESSAGE_MAP()
 
 // CVS2013_MO_DEMOView construction/destruction
 
-CVS2013_MO_DEMOView::CVS2013_MO_DEMOView()
-	: CFormView(CVS2013_MO_DEMOView::IDD)
-{
-	// 设定几个颜色值
-	m_color[0] = RGB(255, 0, 0);
-	m_color[1] = RGB(0, 255, 0);
-	m_color[2] = RGB(0, 0, 255);
-	m_color[3] = RGB(255, 255, 0);
-	m_color[4] = RGB(255, 0, 255);
-
-	// 初始化道路结构数据
-	m_crsRd.rd_wid = 6;
-	m_crsRd.rd_lnm = 3;
-	m_crsRd.rd_rnm = 3;
-	m_crsRd.rd_xlen = 200;
-	m_crsRd.rd_ylen = 200;
-	m_crsRd.rd_sidwk_wid = 5;
-	m_crsRd.rd_arc = m_crsRd.rd_sidwk_wid;
-	m_crsRd.rd_cen_wid = 1.5;
-
-	// 开辟对象空间
-	m_lyrNum = LAYER_NUM;
-	m_dataCon = new CMoDataConnection[m_lyrNum];
-	m_desc = new CMoTableDesc[m_lyrNum];
-	m_layer = new CMoMapLayer[m_lyrNum];
-}
-
-CVS2013_MO_DEMOView::~CVS2013_MO_DEMOView()
-{
-	// 释放在构造函数里创建的空间
-	if (m_trackPts) delete[] m_trackPts;
-	if (m_curPtIndex) delete[] m_curPtIndex;
-	if (m_curGeoEvent) delete[] m_curGeoEvent;
-	if (m_dataCon) delete[] m_dataCon;
-	if (m_desc) delete[] m_desc;
-	if (m_layer) delete[] m_layer;
-}
-
 void CVS2013_MO_DEMOView::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
@@ -111,6 +73,7 @@ void CVS2013_MO_DEMOView::OnInitialUpdate()
 	// Map控件属性测试
 	//m_map.SetAppearance(0); // 1-mo3D 0-moFlat
 	m_map.SetBackColor(RGB(240,255,233));	// 参数实际上是RGB
+	srand(unsigned(time(0)));
 }
 
 
@@ -411,7 +374,7 @@ void CVS2013_MO_DEMOView::initMap()
 	// 字体->symbol
 	for (unsigned int i = 0; i < m_trackPtsNum; ++i){
 		CMoSymbol sym(tLyr.GetSymbol(i));
-		sym.SetColor(m_color[rand() % COLOR_NUM]);
+		sym.SetColor(CarColor[rand() % CAR_COLOR_NUM]);
 		sym.SetStyle(moTrueTypeMarker);			// TrueType类型
 		sym.SetFont(fnt.GetFontDispatch());
 		sym.SetSize(60);
@@ -530,6 +493,171 @@ BOOL CVS2013_MO_DEMOView::createNewLayer()
 	return TRUE;
 }
 
+void CVS2013_MO_DEMOView::OnTestInitm()
+{
+	initMap2();
+}
+
+CMoLine CVS2013_MO_DEMOView::centroSymmetric(CMoLine& l, float offX, float offY)
+{
+	CMoLine mo_line;
+	mo_line.CreateDispatch("MapObjects2.Line");
+
+	CMoParts pats = l.GetParts();
+	for (int j = 0; j < pats.GetCount(); ++j){
+		CMoPoints pts(pats.Item(COleVariant(long(j))));
+		CMoPoints ptsTmp;
+		ptsTmp.CreateDispatch("MapObjects2.Points");
+		for (int i = 0; i < pts.GetCount(); ++i){
+			CMoPoint pt(pts.Item(COleVariant(long(i))));	// pt 是新创建的对象
+			pt.SetX(-pt.GetX() + 2 * offX);
+			pt.SetY(-pt.GetY() + 2 * offY);
+			ptsTmp.Add(pt);
+		}
+		mo_line.GetParts().Add(ptsTmp);
+	}
+
+	return mo_line;
+}
+void CVS2013_MO_DEMOView::OnTestGettrackline()
+{
+	getTrackLine();
+}
+
+/////////////////////////////关键函数/////////////////////////////////////////////
+CVS2013_MO_DEMOView::CVS2013_MO_DEMOView()
+: CFormView(CVS2013_MO_DEMOView::IDD)
+{
+	// 初始化道路结构数据
+	m_crsRd.rd_wid = 4;
+	m_crsRd.rd_lnm = 3;
+	m_crsRd.rd_rnm = 3;
+	m_crsRd.rd_xlen = 200;
+	m_crsRd.rd_ylen = 200;
+	m_crsRd.rd_sidwk_wid = 5;
+	m_crsRd.rd_arc = m_crsRd.rd_sidwk_wid;
+	m_crsRd.rd_cen_wid = 1.5;
+
+	// 开辟对象空间
+	m_lyrNum = LAYER_NUM;
+	m_dataCon = new CMoDataConnection[m_lyrNum];
+	m_desc = new CMoTableDesc[m_lyrNum];
+	m_layer = new CMoMapLayer[m_lyrNum];
+}
+
+CVS2013_MO_DEMOView::~CVS2013_MO_DEMOView()
+{
+	// 释放在构造函数里创建的空间
+	if (m_trackPts) delete[] m_trackPts;
+	if (m_curPtIndex) delete[] m_curPtIndex;
+	if (m_curGeoEvent) delete[] m_curGeoEvent;
+	if (m_dataCon) delete[] m_dataCon;
+	if (m_desc) delete[] m_desc;
+	if (m_layer) delete[] m_layer;
+}
+
+BOOL CVS2013_MO_DEMOView::getTrackLine()
+{
+	CMoLine		mo_line[5];
+	CMoPoints	mo_pts[5];
+	CMoPoint	mo_pt[102];
+	for (int i = 0; i < 5; ++i)
+		mo_line[i].CreateDispatch("MapObjects2.Line");
+	for (int i = 0; i < 5; ++i)
+		mo_pts[i].CreateDispatch("MapObjects2.Points");
+	for (int i = 0; i < 102; ++i)
+		mo_pt[i].CreateDispatch("MapObjects2.Point");
+
+	// x y 为圆心 r 为半径
+	float x = m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid;
+	float y = m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid;
+	float r = m_crsRd.rd_sidwk_wid + m_crsRd.rd_wid / 2;
+
+	mo_pt[0].SetX(0);
+	mo_pt[0].SetY(y + r);
+	for (int i = 0; i < 100; ++i){
+		mo_pt[i + 1].SetX(x + r*sin(i / 100.0*PI / 2.0));
+		mo_pt[i + 1].SetY(y + r*cos(i / 100.0*PI / 2.0));
+	}
+	mo_pt[101].SetX(x + r);
+	mo_pt[101].SetY(0);
+
+	for (int i = 0; i < 102; ++i)
+		mo_pts[0].Add(mo_pt[i]);
+	mo_line[0].GetParts().Add(mo_pts[0]);		// 第一条轨迹
+
+	mo_pt[1].SetX(m_crsRd.rd_xlen);
+	mo_pt[1].SetY(y + r);
+	for (int i = 0; i < 2; ++i)
+		mo_pts[1].Add(mo_pt[i]);
+	mo_line[1].GetParts().Add(mo_pts[1]);		// 第二条轨迹
+
+	mo_line[2].GetParts().Add(mo_pts[1]);
+	mo_line[2].Offset(0, m_crsRd.rd_wid);		// 第三条轨迹
+
+	mo_line[3].GetParts().Add(mo_pts[1]);
+	mo_line[3].Offset(0, m_crsRd.rd_wid * 2);	// 第四条轨迹
+
+	// x 不变
+	y = m_crsRd.rd_ylen - y; // x轴对称
+	r += m_crsRd.rd_lnm*m_crsRd.rd_wid;
+
+	mo_pt[0].SetX(0);
+	mo_pt[0].SetY(y-r);
+	for (int i = 0; i < 100; ++i){
+		mo_pt[i + 1].SetX(x + r*sin(i / 100.0*PI / 2.0));
+		mo_pt[i + 1].SetY(y - r*cos(i / 100.0*PI / 2.0));
+	}
+	mo_pt[101].SetX(x + r);
+	mo_pt[101].SetY(m_crsRd.rd_ylen);
+	for (int i = 0; i < 102; ++i)
+		mo_pts[4].Add(mo_pt[i]);
+	mo_line[4].GetParts().Add(mo_pts[4]);	// 第五条轨迹
+
+	// 存储到容器中
+	for (int i = 0; i < 5; ++i)
+		MoTrackLine.push_back(mo_line[i]);
+
+	// 中心对称变换
+	for (int i = 0; i < 5; ++i)
+		MoTrackLine.push_back(centroSymmetric(mo_line[i], m_crsRd.rd_xlen / 2, m_crsRd.rd_ylen / 2));
+
+	// 旋转平移变换
+	for (int i = 0; i < 5; ++i)
+		MoTrackLine.push_back(rotoffSymmetric(mo_line[i], m_crsRd.rd_xlen, 0, 90));
+	for (int i = 0; i < 5; ++i)
+		MoTrackLine.push_back(rotoffSymmetric(mo_line[i], 0, m_crsRd.rd_ylen, 270));
+
+	return TRUE;
+}
+
+CMoLine CVS2013_MO_DEMOView::rotoffSymmetric(CMoLine& l, float offX, float offY, double ang)
+{
+	// 计算方便，对角度进行变换
+	ang = ang*PI / 180.0;
+
+	CMoLine mo_line;
+	mo_line.CreateDispatch("MapObjects2.Line");
+
+	CMoParts pats = l.GetParts();
+	for (int j = 0; j < pats.GetCount(); ++j){
+		CMoPoints pts(pats.Item(COleVariant(long(j))));
+		CMoPoints ptsTmp;
+		ptsTmp.CreateDispatch("MapObjects2.Points");
+		for (int i = 0; i < pts.GetCount(); ++i){
+			CMoPoint pt(pts.Item(COleVariant(long(i))));	// pt 是新创建的对象
+			double x = pt.GetX();
+			double y = pt.GetY();
+			pt.SetX(x*cos(ang) - y*sin(ang) + offX);
+			pt.SetY(x*sin(ang) + y*cos(ang) + offY);
+			ptsTmp.Add(pt);
+		}
+		mo_line.GetParts().Add(ptsTmp);
+	}
+
+	return mo_line;
+}
+
 BOOL CVS2013_MO_DEMOView::createCrossRoad()
 {
 	// 从底层创建相关 MO 对象
@@ -618,12 +746,12 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 	pt[3].SetX(m_crsRd.rd_xlen / 2);
 	pt[3].SetY(m_crsRd.rd_ylen / 2 - m_crsRd.rd_rnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid);
 
-	
+
 	pts2[0].Add(pt[0]);
 	pts2[0].Add(pt[1]);	// 点串
 	pts2[1].Add(pt[2]);
 	pts2[1].Add(pt[3]);	// 点串
-	
+
 	for (int i = 0; i < dashRdNum; ++i){
 		if ((dashRdNum / 4) % 2 == 1) continue;
 		if (i < dashRdNum / 2)
@@ -637,11 +765,11 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 		else if (i < dashRdNum / 4)
 			lnDash[i].Offset(0, -(i + 1 - dashRdNum / 8)*m_crsRd.rd_wid);
 		else if (i < 3 * dashRdNum / 8)
-			lnDash[i].Offset(m_crsRd.rd_xlen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid, 
-							(i + 1-dashRdNum/4)*m_crsRd.rd_wid);
+			lnDash[i].Offset(m_crsRd.rd_xlen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid,
+			(i + 1 - dashRdNum / 4)*m_crsRd.rd_wid);
 		else
 			lnDash[i].Offset(m_crsRd.rd_xlen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid,
-				-(i + 1 - 3*dashRdNum / 8)*m_crsRd.rd_wid);
+			-(i + 1 - 3 * dashRdNum / 8)*m_crsRd.rd_wid);
 	}
 
 	for (int i = dashRdNum / 2; i < dashRdNum; ++i){
@@ -649,12 +777,12 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 			lnDash[i].Offset((i + 1 - dashRdNum / 2)*m_crsRd.rd_wid, 0);
 		else if (i < 6 * dashRdNum / 8)
 			lnDash[i].Offset(-(i + 1 - 5 * dashRdNum / 8)*m_crsRd.rd_wid, 0);
-		else if (i < 7* dashRdNum / 8)
-			lnDash[i].Offset((i + 1 - 6 * dashRdNum / 8)*m_crsRd.rd_wid, 
-				m_crsRd.rd_ylen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid);
+		else if (i < 7 * dashRdNum / 8)
+			lnDash[i].Offset((i + 1 - 6 * dashRdNum / 8)*m_crsRd.rd_wid,
+			m_crsRd.rd_ylen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid);
 		else
-			lnDash[i].Offset(-(i + 1 - 7 * dashRdNum / 8)*m_crsRd.rd_wid, 
-				m_crsRd.rd_ylen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid);
+			lnDash[i].Offset(-(i + 1 - 7 * dashRdNum / 8)*m_crsRd.rd_wid,
+			m_crsRd.rd_ylen / 2 + m_crsRd.rd_wid*m_crsRd.rd_rnm + m_crsRd.rd_sidwk_wid);
 	}
 
 	/// 第三层（人行道）
@@ -714,7 +842,7 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 	float x = m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid * 2;
 	float y = m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid * 2;
 	ptBord[0].SetX(0);
-	ptBord[0].SetY(y + 2*m_crsRd.rd_sidwk_wid);
+	ptBord[0].SetY(y + 2 * m_crsRd.rd_sidwk_wid);
 	ptBord[1].SetX(0);
 	ptBord[1].SetY(y + m_crsRd.rd_sidwk_wid);
 	for (int i = 0; i < 100; ++i){
@@ -732,7 +860,7 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 		ptBord[i + 104].SetX(x + m_crsRd.rd_sidwk_wid*cos(i / 100.0*PI / 2.0));
 		ptBord[i + 104].SetY(y + m_crsRd.rd_sidwk_wid*sin(i / 100.0*PI / 2.0));
 	}
-	
+
 	for (int i = 0; i < 204; ++i)
 		ptsBord[0].Add(ptBord[i]);
 	poBord[0].GetParts().Add(ptsBord[0]);
@@ -806,153 +934,110 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 	return TRUE;
 }
 
-BOOL CVS2013_MO_DEMOView::getTrackLine()
+BOOL CVS2013_MO_DEMOView::initTrakingLayer()
 {
-	CMoLine		mo_line[5];
-	CMoPoints	mo_pts[5];
-	CMoPoint	mo_pt[102];
-	for (int i = 0; i < 5; ++i)
-		mo_line[i].CreateDispatch("MapObjects2.Line");
-	for (int i = 0; i < 5; ++i)
-		mo_pts[i].CreateDispatch("MapObjects2.Points");
-	for (int i = 0; i < 102; ++i)
-		mo_pt[i].CreateDispatch("MapObjects2.Point");
+	int carSymNum = CAR_COLOR_NUM;
+	int lightSymNum = 3;
 
-	// x y 为圆心 r 为半径
-	float x = m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid;
-	float y = m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid;
-	float r = m_crsRd.rd_sidwk_wid + m_crsRd.rd_wid / 2;
+	MoTrackingLayer = m_map.GetTrackingLayer();	// 获取 MoTrackingLayer，使用全局变量存储
+	MoTrackingLayer.SetSymbolCount(carSymNum+lightSymNum);	
 
-	mo_pt[0].SetX(0);
-	mo_pt[0].SetY(y + r);
-	for (int i = 0; i < 100; ++i){
-		mo_pt[i + 1].SetX(x + r*sin(i / 100.0*PI / 2.0));
-		mo_pt[i + 1].SetY(y + r*cos(i / 100.0*PI / 2.0));
+	// 设置车符号种类
+	for (int i = 0; i < carSymNum;++i){
+		CMoSymbol sym(MoTrackingLayer.GetSymbol(long(i)));
+		
+		CMoFont fnt;
+		fnt.InitializeFont();			// 类似 CreateDispatch
+		fnt.SetName(TEXT("MoCars2"));	// 设置字体库
+
+		sym.SetColor(CarColor[i]);
+		sym.SetStyle(moTrueTypeMarker);				// TrueType类型
+		sym.SetFont(fnt.GetFontDispatch());
+		sym.SetSize(20);
+		sym.SetCharacterIndex(1);					// 设置字体库中字的编号值（十进制）
+		fnt.ReleaseFont();
 	}
-	mo_pt[101].SetX(x + r);
-	mo_pt[101].SetY(0);
 
-	for (int i = 0; i < 102; ++i)
-		mo_pts[0].Add(mo_pt[i]);
-	mo_line[0].GetParts().Add(mo_pts[0]);		// 第一条轨迹
-
-	mo_pt[1].SetX(m_crsRd.rd_xlen);
-	mo_pt[1].SetY(y + r);
-	for (int i = 0; i < 2; ++i)
-		mo_pts[1].Add(mo_pt[i]);
-	mo_line[1].GetParts().Add(mo_pts[1]);		// 第二条轨迹
-
-	mo_line[2].GetParts().Add(mo_pts[1]);
-	mo_line[2].Offset(0, m_crsRd.rd_wid);		// 第三条轨迹
-
-	mo_line[3].GetParts().Add(mo_pts[1]);
-	mo_line[3].Offset(0, m_crsRd.rd_wid * 2);	// 第四条轨迹
-
-	// x 不变
-	y = m_crsRd.rd_ylen - y; // x轴对称
-	r += m_crsRd.rd_lnm*m_crsRd.rd_wid;
-
-	mo_pt[0].SetX(0);
-	mo_pt[0].SetY(y-r);
-	for (int i = 0; i < 100; ++i){
-		mo_pt[i + 1].SetX(x + r*sin(i / 100.0*PI / 2.0));
-		mo_pt[i + 1].SetY(y - r*cos(i / 100.0*PI / 2.0));
+	// 设置红绿灯种类
+	for (int i = carSymNum; i < carSymNum + lightSymNum; ++i){
+		CMoSymbol sym(MoTrackingLayer.GetSymbol(long(i)));
+		sym.SetSymbolType(1);  // 符号默认为 1 （点状）
+		sym.SetSize(3);	 
+		sym.SetColor(LightColor[i - carSymNum]);
 	}
-	mo_pt[101].SetX(x + r);
-	mo_pt[101].SetY(m_crsRd.rd_ylen);
-	for (int i = 0; i < 102; ++i)
-		mo_pts[4].Add(mo_pt[i]);
-	mo_line[4].GetParts().Add(mo_pts[4]);	// 第五条轨迹
-
-	// 存储到容器中
-	for (int i = 0; i < 5; ++i)
-		MoTrackLine.push_back(mo_line[i]);
-
-	// 中心对称变换
-	for (int i = 0; i < 5; ++i)
-		MoTrackLine.push_back(centroSymmetric(mo_line[i], m_crsRd.rd_xlen / 2, m_crsRd.rd_ylen / 2));
-
-	// 旋转平移变换
-	for (int i = 0; i < 5; ++i)
-		MoTrackLine.push_back(rotoffSymmetric(mo_line[i], m_crsRd.rd_xlen, 0, 90));
-	for (int i = 0; i < 5; ++i)
-		MoTrackLine.push_back(rotoffSymmetric(mo_line[i], 0, m_crsRd.rd_ylen, 270));
 
 	return TRUE;
 }
 
-CMoLine CVS2013_MO_DEMOView::centroSymmetric(CMoLine& l, float offX, float offY)
-{
-	CMoLine mo_line;
-	mo_line.CreateDispatch("MapObjects2.Line");
-
-	CMoParts pats = l.GetParts();
-	for (int j = 0; j < pats.GetCount(); ++j){
-		CMoPoints pts(pats.Item(COleVariant(long(j))));
-		CMoPoints ptsTmp;
-		ptsTmp.CreateDispatch("MapObjects2.Points");
-		for (int i = 0; i < pts.GetCount(); ++i){
-			CMoPoint pt(pts.Item(COleVariant(long(i))));	// pt 是新创建的对象
-			pt.SetX(-pt.GetX() + 2 * offX);
-			pt.SetY(-pt.GetY() + 2 * offY);
-			ptsTmp.Add(pt);
-		}
-		mo_line.GetParts().Add(ptsTmp);
-	}
-
-	return mo_line;
-}
-
-void CVS2013_MO_DEMOView::OnTestGettrackline()
-{
-	getTrackLine();
-}
-
-CMoLine CVS2013_MO_DEMOView::rotoffSymmetric(CMoLine& l, float offX, float offY, double ang)
-{
-	// 计算方便，对角度进行变换
-	ang = ang*PI / 180.0;
-
-	CMoLine mo_line;
-	mo_line.CreateDispatch("MapObjects2.Line");
-
-	CMoParts pats = l.GetParts();
-	for (int j = 0; j < pats.GetCount(); ++j){
-		CMoPoints pts(pats.Item(COleVariant(long(j))));
-		CMoPoints ptsTmp;
-		ptsTmp.CreateDispatch("MapObjects2.Points");
-		for (int i = 0; i < pts.GetCount(); ++i){
-			CMoPoint pt(pts.Item(COleVariant(long(i))));	// pt 是新创建的对象
-			double x = pt.GetX();
-			double y = pt.GetY();
-			double ma_tst = cos(ang);
-			pt.SetX(x*cos(ang) - y*sin(ang) + offX);
-			pt.SetY(x*sin(ang) + y*cos(ang) + offY);
-			double x2 = pt.GetX();
-			double y2 = pt.GetY();
-			ptsTmp.Add(pt);
-		}
-		mo_line.GetParts().Add(ptsTmp);
-	}
-
-	return mo_line;
-}
-
-// 准备工作
 void CVS2013_MO_DEMOView::initMap2()
 {
-	int carNum = 100;
-	MoTrackingLayer = m_map.GetTrackingLayer();	// 获取 MoTrackingLayer，使用全局变量存储
-	MoTrackingLayer.SetSymbolCount(carNum);		// 假设为100辆车
+	initTrakingLayer();
 	getTrackLine();
 }
 
-void CVS2013_MO_DEMOView::OnTestInitm()
+void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 {
-	initMap2();
+	createCrossRoad();
+	initTrakingLayer();
+	getTrackLine();
+
+	// 创建车辆
+	for (int i = 0; i < 20; ++i){
+		Car car;
+		car.CreateCar(i+1, (rand()%15+10)/10.0);
+		m_Car.push_back(car);
+	}
+
+	// 创建灯
+	TrafficLight light[8];
+	Pos pt1, pt2;
+	float x = m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid;
+	float y = m_crsRd.rd_ylen / 2;
+	pt1.x = x;
+	pt1.y = y;
+	pt2.x = x;
+	pt2.y = y - m_crsRd.rd_wid;
+
+	light[0].CreateLight(pt1, pt2);	// 一
+
+	pt1.y -= m_crsRd.rd_rnm*m_crsRd.rd_wid;
+	light[1].CreateLight(pt1, pt2);	// 二
+
+	pt1.x = m_crsRd.rd_xlen - pt1.x;
+	pt1.y = m_crsRd.rd_ylen - pt1.y;
+	pt2.x = m_crsRd.rd_xlen - pt2.x;
+	pt2.y = m_crsRd.rd_ylen - pt2.y;
+	light[2].CreateLight(pt1, pt2);	// 三
+
+	pt1.y -= m_crsRd.rd_rnm*m_crsRd.rd_wid;
+	light[3].CreateLight(pt1, pt2);	// 四
+
+	x = m_crsRd.rd_xlen / 2;
+	y = m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid;
+	pt1.x = x;
+	pt1.y = y;
+	pt2.x = x + m_crsRd.rd_wid;
+	pt2.y = y;
+	light[4].CreateLight(pt1, pt2);	// 五
+
+	pt1.x += m_crsRd.rd_rnm*m_crsRd.rd_wid;
+	light[5].CreateLight(pt1, pt2);	// 六
+
+	pt1.x = m_crsRd.rd_xlen - pt1.x;
+	pt1.y = m_crsRd.rd_ylen - pt1.y;
+	pt2.x = m_crsRd.rd_xlen - pt2.x;
+	pt2.y = m_crsRd.rd_ylen - pt2.y;
+	light[6].CreateLight(pt1, pt2);	// 七
+
+	pt1.x += m_crsRd.rd_rnm*m_crsRd.rd_wid;
+	light[7].CreateLight(pt1, pt2);	// 八
+
+	for (int i = 0; i < 8; ++i)
+		m_Light.push_back(light[i]);
+
+	SetTimer(2, ELAPSE_TIME, NULL);
 }
 
-// 响应 SetTimer
 void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == 1){
@@ -967,28 +1052,26 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 	}
 
 	else if (nIDEvent == 2){
+		// 车
 		for (unsigned i = 0; i < m_Car.size(); ++i){
 			if (!m_Car.at(i).flag)
 				m_Car.at(i).Move();
 		}
+
+		// 灯
+		for (unsigned i = 0; i < m_Light.size(); ++i){
+			m_Light.at(i).ChangeLightColor();
+		}
 	}
 }
-void CVS2013_MO_DEMOView::OnTestStarttest()
-{
-	//srand(unsigned(time(0)));
-	for (int i = 0; i < 5; ++i){	// 要派出车辆的数目
-		Car car;
-		//car.CreateCar(i+1, (rand()%15+5)/10.0);	// 为什么产生的随机数不均匀
-		car.CreateCar(i + 1, i * 3 / 10.0 + 5.0);
-		m_Car.push_back(car);
-	}
-	SetTimer(2, ELAPSE_TIME, NULL);
-}
+
 void CVS2013_MO_DEMOView::OnTestStoptest()
 {
 	KillTimer(2);
 }
-// 汽车类的实现
+
+
+/////////////////////////////汽车类实现/////////////////////////////////////////////
 Car::Car()
 {
 	flag = FALSE;
@@ -999,31 +1082,17 @@ Car::~Car()
 }
 void Car::CreateCar(int lNum, double dis)
 {
-	srand(unsigned(time(0)));
 	lneNum = lNum;
 	lne = MoTrackLine.at(lneNum - 1);
 
 	// 初始化车编号
 	carInd = TotalCarNum;
-
-	//////////////////////////////////////////////////////////////////////////
-	// 字体
-	CMoFont fnt;
-	fnt.InitializeFont();			// 类似 CreateDispatch
-	fnt.SetName(TEXT("MoCars2"));	// 设置字体库
-	// 符号设置
-	sym = MoTrackingLayer.GetSymbol(TotalCarNum);
-	sym.SetColor(m_color[rand() % COLOR_NUM]);
-	sym.SetStyle(moTrueTypeMarker);				// TrueType类型
-	sym.SetFont(fnt.GetFontDispatch());
-	sym.SetSize(10);
-	sym.SetCharacterIndex(1);					// 设置字体库中字的编号值（十进制）
-	fnt.ReleaseFont();
+	
 	// 挂接
 	pt.CreateDispatch(TEXT("MapObjects2.Point"));
 	pt.SetX(0);
 	pt.SetY(0);
-	evnt = MoTrackingLayer.AddEvent(pt, 0);
+	evnt = MoTrackingLayer.AddEvent(pt, rand() % 5);
 
 	// 根据线获取点集
 	pts.CreateDispatch(TEXT("MapObjects2.Points"));
@@ -1045,6 +1114,7 @@ void Car::CreateCar(int lNum, double dis)
 
 void Car::Move()
 {
+	curPos = nexPos;
 	if (ptsInd < divNum){
 		nexPos.x = pts.Item(COleVariant(long(ptsInd))).GetX();
 		nexPos.y = pts.Item(COleVariant(long(ptsInd))).GetY();
@@ -1053,10 +1123,53 @@ void Car::Move()
 	else
 		flag = TRUE;
 
+	// 设置角度 ???
+	/*double ang = 180.0 / PI*atan((nexPos.y - curPos.y) / (nexPos.x - curPos.x));
+	MoTrackingLayer.GetSymbol(carInd).SetRotation(ang);*/
 	evnt.MoveTo(nexPos.x, nexPos.y);
 }
 
 void Car::Stop()
 {
 	
+}
+
+void Car::ChangeColor()
+{
+	evnt.SetSymbolIndex(rand() % CAR_COLOR_NUM);
+}
+
+/////////////////////////////红绿灯类/////////////////////////////////////////////
+TrafficLight::TrafficLight()
+{
+}
+
+TrafficLight::~TrafficLight()
+{
+}
+void TrafficLight::CreateLight(Pos pt1, Pos pt2)
+{
+	// 设置定位点
+	lne.CreateDispatch("MapObjects2.Line");
+	CMoPoint pt;
+	pt.CreateDispatch("MapObjects2.Point");
+	CMoPoints pts;
+	pts.CreateDispatch("MapObjects2.Points");
+
+	pt.SetX(pt1.x);
+	pt.SetY(pt1.y);
+	pts.Add(pt);
+	pt.SetX(pt2.x);
+	pt.SetY(pt2.y);
+	pts.Add(pt);
+
+	lne.GetParts().Add(pts);
+
+	// 事件
+	evnt = MoTrackingLayer.AddEvent(lne, rand() % LIGHT_COLOR_NUM + CAR_COLOR_NUM);
+}
+
+void TrafficLight::ChangeLightColor()
+{
+	evnt.SetSymbolIndex(rand() % LIGHT_COLOR_NUM + CAR_COLOR_NUM);
 }

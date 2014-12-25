@@ -7,7 +7,6 @@
 #include "resource.h"
 #include "MO Commons/map.h"
 #include "ATRNS_SIMU.h"
-#include <cmath>
 
 class CVS2013_MO_DEMOView : public CFormView
 {
@@ -20,9 +19,10 @@ class CVS2013_MO_DEMOView : public CFormView
 public:
 	//  [12/25/2014 guojianzhu]
 	//friend class Car;
-	vector<Car>         m_Car;			// 车类
+	vector<TrafficLight>	m_Light;		// 灯容器
+	vector<Car>				m_Car;			// 车容器
 	//  [12/24/2014 guojianzhu]
-	vector<CMoPoints>	m_TrackPoints;	// 轨迹点
+	vector<CMoPoints>	m_TrackPoints;		// 轨迹点
 
 	//  [12/21/2014 guojianzhu]
 	CrossRoad m_crsRd;	// 道路数据结构体
@@ -40,6 +40,7 @@ public:
 	* 说明：中心对称函数
 	* 功能：参数为已有的线对象，中心点坐标，返回一个线对象
 	*/
+	BOOL initTrakingLayer();	// 设置 MoTrackingLayer 的属性
 	CMoLine centroSymmetric(CMoLine& l, float offX, float offY);				// 中心对称
 	CMoLine rotoffSymmetric(CMoLine& l, float offX, float offY, double ang);	// 旋转平移
 	void initMap2();	// 初始化一些参数 测试

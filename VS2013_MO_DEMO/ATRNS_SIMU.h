@@ -7,15 +7,21 @@
 using namespace std;
 
 // 一些自定义常量和头文件
-#define COLOR_NUM 5	// 颜色种类，颜色数组在 view 的构造函数里
-#define LAYER_NUM 4	// 十字路口的图层数目
-#define PI		  3.141592
-#define ELAPSE_TIME	50	// 定时器间隔
+#define CAR_COLOR_NUM	5	
+#define LIGHT_COLOR_NUM 3
+#define LAYER_NUM		4			// 十字路口的图层数目
+#define PI				3.141592
+#define ELAPSE_TIME		50			// 定时器间隔
 
-static vector<CMoLine>		MoTrackLine;	// 轨迹线
+static vector<CMoLine>	MoTrackLine;		// 轨迹线
+static vector<CMoLine>	MoTrafficLight;		// 红绿灯
 static CMoTrackingLayer MoTrackingLayer;	// 挂接图层
 static int TotalCarNum;						// 车辆个数
-static COLORREF	 m_color[COLOR_NUM];		// 颜色数组
+static COLORREF CarColor[CAR_COLOR_NUM] =
+{ RGB(255, 0, 0), RGB(0, 255, 0), RGB(0, 0, 255), RGB(255, 255, 0), RGB(255, 0, 255) };
+
+static COLORREF LightColor[LIGHT_COLOR_NUM] =
+{ RGB(255, 0, 0), RGB(0, 255, 0), RGB(255, 255, 0) };
 
 struct Pos
 {
@@ -59,12 +65,26 @@ public:
 	// 函数
 	void CreateCar(int lNum = 1, double dis = 1);	
 						// 显示创建一个车，参数：车道编号、每周期行驶距离
+	void ChangeColor();	// 改变车颜色，测试用
 	void Move();		// 启动
 	void Stop();		// 停止
 	void Acc();			// 加速
 	void Dec();			// 减速
 };
 
+class TrafficLight
+{
+public:
+	TrafficLight();
+	~TrafficLight();
+	void CreateLight(Pos pt1, Pos pt2);		// 显示创建
+	void ChangeLightColor();	// 设置灯的颜色
+
+private:
+	CMoLine lne;		// 红绿灯对应的线
+	CMoSymbol sym;		// 符号
+	CMoGeoEvent evnt;	// 事件
+};
 
 
 #endif
