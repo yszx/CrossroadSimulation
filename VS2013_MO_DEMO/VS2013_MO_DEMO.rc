@@ -155,6 +155,10 @@ BEGIN
     POPUP "&Test"
     BEGIN
         MENUITEM "&GetTrackLine",               ID_TEST_GETTRACKLINE
+        MENUITEM SEPARATOR
+        MENUITEM "&InitMap",                    ID_TEST_INITM
+        MENUITEM "&StartTest",                  ID_TEST_STARTTEST
+        MENUITEM "&StopTest",                   ID_TEST_STOPTEST
     END
 END
 

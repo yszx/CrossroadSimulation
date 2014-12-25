@@ -7,6 +7,7 @@
 #include "resource.h"
 #include "MO Commons/map.h"
 #include "ATRNS_SIMU.h"
+#include <cmath>
 
 class CVS2013_MO_DEMOView : public CFormView
 {
@@ -17,6 +18,9 @@ class CVS2013_MO_DEMOView : public CFormView
 	//  [12/20/2014 guojianzhu]
 	// 4. 自动生成道路数据
 public:
+	//  [12/25/2014 guojianzhu]
+	//friend class Car;
+	vector<Car>         m_Car;			// 车类
 	//  [12/24/2014 guojianzhu]
 	vector<CMoPoints>	m_TrackPoints;	// 轨迹点
 
@@ -36,9 +40,10 @@ public:
 	* 说明：中心对称函数
 	* 功能：参数为已有的线对象，中心点坐标，返回一个线对象
 	*/
-	CMoLine centroSymmetric(CMoLine& l, float x, float y);				// 中心对称
-	CMoLine rotoffSymmetric(CMoLine& l, float x, float y, double ang);	// 旋转平移
-	void initMap2();	// 初始化一些参数
+	CMoLine centroSymmetric(CMoLine& l, float offX, float offY);				// 中心对称
+	CMoLine rotoffSymmetric(CMoLine& l, float offX, float offY, double ang);	// 旋转平移
+	void initMap2();	// 初始化一些参数 测试
+	void startTest();	// 运行测试
 
 	BOOL getTrackLine();	// 获得十字路口的跟踪线
 	BOOL createCrossRoad();	// 创建十字路口道路数据，结合 m_crsRd
@@ -110,6 +115,9 @@ public:
 	afx_msg void OnOpetationStop();
 	afx_msg void OnOpetationAutodraw();
 	afx_msg void OnTestGettrackline();
+	afx_msg void OnTestInitm();
+	afx_msg void OnTestStarttest();
+	afx_msg void OnTestStoptest();
 };
 
 
