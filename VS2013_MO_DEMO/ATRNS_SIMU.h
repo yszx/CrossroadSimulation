@@ -11,7 +11,10 @@ using namespace std;
 #define LIGHT_COLOR_NUM 3
 #define LAYER_NUM		4			// 十字路口的图层数目
 #define PI				3.141592
-#define ELAPSE_TIME		50			// 定时器间隔
+#define ELAPSE_TIME		50			// 定时器间隔(ms)
+
+#define INFX			999999
+#define INFY			999999
 
 static vector<CMoLine>	MoTrackLine;		// 轨迹线
 static vector<CMoLine>	MoTrafficLight;		// 红绿灯
@@ -61,16 +64,21 @@ private:
 	int divNum;			// 行驶的步数
 
 public:
-	BOOL flag;			// 停止标志
+	BOOL flagStop;			// 停止标志
+	BOOL flagEnd;			// 末尾标志
 	// 函数
 	void CreateCar(int lNum = 1, double dis = 1);	
 						// 显示创建一个车，参数：车道编号、每周期行驶距离
 	void ChangeColor();	// 改变车颜色，测试用
-	void Move();		// 启动
+	void Move();		// 移动
 	void Stop();		// 停止
+	void Start();		// 启动
+	void Disappear();	// 消失
 	void Acc();			// 加速
 	void Dec();			// 减速
 };
+
+
 
 class TrafficLight
 {

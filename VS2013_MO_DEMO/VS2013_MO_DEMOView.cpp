@@ -29,6 +29,9 @@ on the distance of the vertex from the start of the Line.
 #define new DEBUG_NEW
 #endif
 
+//#define COMMENT_LINE
+#define COMMENT_LINE2
+
 
 // CVS2013_MO_DEMOView
 
@@ -981,13 +984,16 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 	initTrakingLayer();
 	getTrackLine();
 
+#ifndef COMMENT_LINE2
 	// 创建车辆
-	for (int i = 0; i < 20; ++i){
+	for (int i = 0; i < 10; ++i){
 		Car car;
-		car.CreateCar(i+1, (rand()%15+10)/10.0);
+		car.CreateCar(i + 1, (rand() % 15 + 10) / 10.0);
 		m_Car.push_back(car);
 	}
+#endif
 
+#ifndef COMMENT_LINE
 	// 创建灯
 	TrafficLight light[8];
 	Pos pt1, pt2;
@@ -1034,8 +1040,10 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 
 	for (int i = 0; i < 8; ++i)
 		m_Light.push_back(light[i]);
+#endif
 
 	SetTimer(2, ELAPSE_TIME, NULL);
+	SetTimer(3, 5*ELAPSE_TIME, NULL);
 }
 
 void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
@@ -1054,7 +1062,11 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 	else if (nIDEvent == 2){
 		// 车
 		for (unsigned i = 0; i < m_Car.size(); ++i){
-			if (!m_Car.at(i).flag)
+			if (m_Car.at(i).flagEnd)
+				m_Car.at(i).Disappear();
+			else if (m_Car.at(i).flagStop)
+				m_Car.at(i).Stop();
+			else
 				m_Car.at(i).Move();
 		}
 
@@ -1062,19 +1074,35 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 		for (unsigned i = 0; i < m_Light.size(); ++i){
 			m_Light.at(i).ChangeLightColor();
 		}
+		CFormView::OnTimer(nIDEvent);
+	}
+
+	// 模拟真实时间
+	else if (nIDEvent == 3){
+		Car car;
+		car.CreateCar(rand() % 20 + 1, (rand() % 15 + 10) / 10.0);
+		m_Car.push_back(car);
+
+		// 清除 GeoEvent
+		if (MoTrackingLayer.GetEventCount() > 1000)
+			MoTrackingLayer.ClearEvents();
+
+		CFormView::OnTimer(nIDEvent);
 	}
 }
 
 void CVS2013_MO_DEMOView::OnTestStoptest()
 {
 	KillTimer(2);
+	KillTimer(3);
 }
 
 
 /////////////////////////////汽车类实现/////////////////////////////////////////////
 Car::Car()
 {
-	flag = FALSE;
+	flagStop = FALSE;
+	flagEnd = FALSE;
 }
 Car::~Car()
 {
@@ -1120,8 +1148,10 @@ void Car::Move()
 		nexPos.y = pts.Item(COleVariant(long(ptsInd))).GetY();
 		++ptsInd;
 	}
-	else
-		flag = TRUE;
+	else{
+		flagStop = TRUE;
+		flagEnd = TRUE;
+	}
 
 	// 设置角度 ???
 	/*double ang = 180.0 / PI*atan((nexPos.y - curPos.y) / (nexPos.x - curPos.x));
@@ -1131,7 +1161,18 @@ void Car::Move()
 
 void Car::Stop()
 {
-	
+	evnt.MoveTo(curPos.x, curPos.y);
+}
+
+void Car::Start()
+{
+	flagStop = FALSE;
+}
+
+void Car::Disappear()
+{
+	//MoTrackingLayer.RemoveEvent(carInd);
+	evnt.MoveTo(INFX, INFY);	// 此种行为应该受到鄙视。。。但对内存释放机制不熟悉，所以==先将就咯
 }
 
 void Car::ChangeColor()
@@ -1147,6 +1188,7 @@ TrafficLight::TrafficLight()
 TrafficLight::~TrafficLight()
 {
 }
+
 void TrafficLight::CreateLight(Pos pt1, Pos pt2)
 {
 	// 设置定位点
