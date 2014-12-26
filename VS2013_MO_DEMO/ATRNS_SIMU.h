@@ -25,6 +25,7 @@ struct CrossRoad
 // 一些常量
 #define CAR_COLOR_NUM		5	
 #define LIGHT_COLOR_NUM		3
+#define ANGLE_NUM			360
 #define LAYER_NUM			4				// 十字路口的图层数目
 #define PI					3.141592
 #define CAR_ELAPSE_TIME		50				// 定时器间隔(ms)-车
@@ -70,6 +71,7 @@ private:
 	int divNum;			// 行驶的步数
 
 public:
+	int symColorInd;	// 颜色 Index
 	int state;			// 所处的相位，用于处理相位逻辑
 	BOOL InOneWay(int l1, int l2);		// 是否在同一跑道上
 	Pos	curPos, nexPos;		// 当前位置、下一位置

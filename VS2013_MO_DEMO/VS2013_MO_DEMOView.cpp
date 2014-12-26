@@ -938,7 +938,7 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 	CMoLayers layers(m_map.GetLayers());
 	for (unsigned int i = 0; i < m_lyrNum; ++i)
 		layers.Add(m_layer[i]);
-	m_map.SetBackColor(RGB(0, 0, 0));
+	m_map.SetBackColor(RGB(50, 50, 50));
 	m_map.Refresh();
 
 	return TRUE;
@@ -946,14 +946,45 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 
 BOOL CVS2013_MO_DEMOView::initTrakingLayer()
 {
-	int carSymNum = CAR_COLOR_NUM;
-	int lightSymNum = 3;
-
 	MoTrackingLayer = m_map.GetTrackingLayer();	// 获取 MoTrackingLayer，使用全局变量存储
-	MoTrackingLayer.SetSymbolCount(carSymNum+lightSymNum);	
+	int tmp = CAR_COLOR_NUM + LIGHT_COLOR_NUM + ANGLE_NUM*CAR_COLOR_NUM;
+	MoTrackingLayer.SetSymbolCount(tmp);
 
-	// 设置车符号种类
-	for (int i = 0; i < carSymNum;++i){
+	for (int i = 0; i < tmp; ++i){
+		CMoSymbol sym(MoTrackingLayer.GetSymbol(long(i)));
+
+		// 红绿灯种类
+		if (i >= CAR_COLOR_NUM && i < CAR_COLOR_NUM + LIGHT_COLOR_NUM){
+			sym.SetSymbolType(1);  // 符号默认为 1 （点状）
+			sym.SetSize(3);
+			sym.SetColor(LightColor[i - CAR_COLOR_NUM]);
+		}
+
+		// 车符号种类
+		else{
+			CMoFont fnt;
+			fnt.InitializeFont();			// 类似 CreateDispatch
+			fnt.SetName(TEXT("MoCars2"));	// 设置字体库
+
+			sym.SetStyle(moTrueTypeMarker);				// TrueType类型
+			sym.SetFont(fnt.GetFontDispatch());
+			sym.SetSize(CAR_DEFAULT_SIZE);
+			sym.SetCharacterIndex(1);					// 设置字体库中字的编号值（十进制）
+			fnt.ReleaseFont();
+			if (i < CAR_COLOR_NUM){
+				sym.SetColor(CarColor[i]);
+			}
+			else{
+				int tmp = i - CAR_COLOR_NUM - LIGHT_COLOR_NUM;
+				sym.SetColor(CarColor[tmp / ANGLE_NUM]);
+				sym.SetRotation(double(tmp % ANGLE_NUM));
+			}
+		}
+	}
+
+#ifdef INIT_TRCKINGLAYER_OLD
+// 设置车符号种类
+	for (int i = 0; i < CAR_COLOR_NUM;++i){
 		CMoSymbol sym(MoTrackingLayer.GetSymbol(long(i)));
 		
 		CMoFont fnt;
@@ -969,12 +1000,13 @@ BOOL CVS2013_MO_DEMOView::initTrakingLayer()
 	}
 
 	// 设置红绿灯种类
-	for (int i = carSymNum; i < carSymNum + lightSymNum; ++i){
+	for (int i = CAR_COLOR_NUM; i < CAR_COLOR_NUM + LIGHT_COLOR_NUM; ++i){
 		CMoSymbol sym(MoTrackingLayer.GetSymbol(long(i)));
 		sym.SetSymbolType(1);  // 符号默认为 1 （点状）
 		sym.SetSize(3);	 
-		sym.SetColor(LightColor[i - carSymNum]);
+		sym.SetColor(LightColor[i - CAR_COLOR_NUM]);
 	}
+#endif
 
 	return TRUE;
 }
@@ -1279,7 +1311,9 @@ void Car::CreateCar(int lNum, double dis)
 	pt.CreateDispatch(TEXT("MapObjects2.Point"));
 	pt.SetX(0);
 	pt.SetY(0);
-	evnt = MoTrackingLayer.AddEvent(pt, rand() % 5);
+
+	symColorInd = rand() % CAR_COLOR_NUM;
+	evnt = MoTrackingLayer.AddEvent(pt, symColorInd);
 
 	// 根据线获取点集
 	pts.CreateDispatch(TEXT("MapObjects2.Points"));
@@ -1294,6 +1328,7 @@ void Car::CreateCar(int lNum, double dis)
 	ptsInd = 0;
 	startPos.x = pts.Item(COleVariant(long(ptsInd))).GetX();
 	startPos.y = pts.Item(COleVariant(long(ptsInd))).GetY();
+	nexPos = curPos = startPos;
 	evnt.MoveTo(startPos.x, startPos.y);
 	++TotalCarNum;
 
@@ -1310,6 +1345,7 @@ void Car::CreateCar(int lNum, double dis)
 
 void Car::Move()	// 判断车的状态+移动
 {
+	// 移动判断
 	curPos = nexPos;
 	if (ptsInd < divNum){
 		nexPos.x = pts.Item(COleVariant(long(ptsInd))).GetX();
@@ -1324,9 +1360,22 @@ void Car::Move()	// 判断车的状态+移动
 		flagEnd = TRUE;
 	}
 
-	// 设置角度 ???
-	/*double ang = 180.0 / PI*atan((nexPos.y - curPos.y) / (nexPos.x - curPos.x));
-	MoTrackingLayer.GetSymbol(carInd).SetRotation(ang);*/
+	// 设置角度
+	double initAng = 0;
+	double ang = 0;
+
+	if (lneNum <= 5) initAng = 90;
+	else if (lneNum <= 10) initAng = -90;
+	else if (lneNum <= 15) initAng = 90;
+	else initAng = -90;					
+	
+	if (nexPos.x != curPos.x)
+		ang = 180.0 / PI*atan((nexPos.y - curPos.y) / (nexPos.x - curPos.x)) + initAng;
+	else
+		ang = initAng;
+	if (ang < 0)
+		ang = 360.0 + ang;
+	evnt.SetSymbolIndex(CAR_COLOR_NUM + LIGHT_COLOR_NUM + symColorInd*ANGLE_NUM + int(ang));
 	evnt.MoveTo(nexPos.x, nexPos.y);
 }
 
