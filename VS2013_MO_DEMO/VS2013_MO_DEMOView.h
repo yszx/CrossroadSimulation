@@ -17,12 +17,15 @@ class CVS2013_MO_DEMOView : public CFormView
 	//  [12/20/2014 guojianzhu]
 	// 4. 自动生成道路数据
 public:
+	//  [12/26/2014 guojianzhu]
+	float ClockState;					// 时钟，记录总时间
+	void SelecetState(int state = 3);	// 全局函数，相位控制
 	//  [12/25/2014 guojianzhu]
 	//friend class Car;
 	vector<TrafficLight>	m_Light;		// 灯容器
-	vector<Car>				m_Car;			// 车容器
 	//  [12/24/2014 guojianzhu]
 	vector<CMoPoints>	m_TrackPoints;		// 轨迹点
+	
 
 	//  [12/21/2014 guojianzhu]
 	CrossRoad m_crsRd;	// 道路数据结构体

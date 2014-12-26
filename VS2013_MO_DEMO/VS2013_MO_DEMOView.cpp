@@ -30,7 +30,8 @@ on the distance of the vertex from the start of the Line.
 #endif
 
 //#define COMMENT_LINE
-#define COMMENT_LINE2
+#define COMMENT_LINE2		// 手动投放
+//#define COMMENT_LINE3		// 随机投放
 
 
 // CVS2013_MO_DEMOView
@@ -546,6 +547,9 @@ CVS2013_MO_DEMOView::CVS2013_MO_DEMOView()
 	m_dataCon = new CMoDataConnection[m_lyrNum];
 	m_desc = new CMoTableDesc[m_lyrNum];
 	m_layer = new CMoMapLayer[m_lyrNum];
+
+	// 时钟
+	ClockState = 0;
 }
 
 CVS2013_MO_DEMOView::~CVS2013_MO_DEMOView()
@@ -956,7 +960,7 @@ BOOL CVS2013_MO_DEMOView::initTrakingLayer()
 		sym.SetColor(CarColor[i]);
 		sym.SetStyle(moTrueTypeMarker);				// TrueType类型
 		sym.SetFont(fnt.GetFontDispatch());
-		sym.SetSize(20);
+		sym.SetSize(CAR_DEFAULT_SIZE);
 		sym.SetCharacterIndex(1);					// 设置字体库中字的编号值（十进制）
 		fnt.ReleaseFont();
 	}
@@ -986,7 +990,7 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 
 #ifndef COMMENT_LINE2
 	// 创建车辆
-	for (int i = 0; i < 10; ++i){
+	for (int i = 10; i < 15; ++i){
 		Car car;
 		car.CreateCar(i + 1, (rand() % 15 + 10) / 10.0);
 		m_Car.push_back(car);
@@ -1009,6 +1013,8 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 	pt1.y -= m_crsRd.rd_rnm*m_crsRd.rd_wid;
 	light[1].CreateLight(pt1, pt2);	// 二
 
+	LIGHT[0] = pt1.x;
+
 	pt1.x = m_crsRd.rd_xlen - pt1.x;
 	pt1.y = m_crsRd.rd_ylen - pt1.y;
 	pt2.x = m_crsRd.rd_xlen - pt2.x;
@@ -1017,6 +1023,8 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 
 	pt1.y -= m_crsRd.rd_rnm*m_crsRd.rd_wid;
 	light[3].CreateLight(pt1, pt2);	// 四
+
+	LIGHT[1] = pt1.x;
 
 	x = m_crsRd.rd_xlen / 2;
 	y = m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid - m_crsRd.rd_sidwk_wid;
@@ -1029,6 +1037,8 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 	pt1.x += m_crsRd.rd_rnm*m_crsRd.rd_wid;
 	light[5].CreateLight(pt1, pt2);	// 六
 
+	LIGHT[2] = pt1.y;
+
 	pt1.x = m_crsRd.rd_xlen - pt1.x;
 	pt1.y = m_crsRd.rd_ylen - pt1.y;
 	pt2.x = m_crsRd.rd_xlen - pt2.x;
@@ -1038,12 +1048,15 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 	pt1.x += m_crsRd.rd_rnm*m_crsRd.rd_wid;
 	light[7].CreateLight(pt1, pt2);	// 八
 
+	LIGHT[3] = pt1.y;
+
 	for (int i = 0; i < 8; ++i)
 		m_Light.push_back(light[i]);
 #endif
 
-	SetTimer(2, ELAPSE_TIME, NULL);
-	SetTimer(3, 5*ELAPSE_TIME, NULL);
+	SetTimer(2, CAR_ELAPSE_TIME, NULL);
+	SetTimer(3, CLOCK_ELAPSE_TIME, NULL);
+	SelecetState(3);	// 初始状态
 }
 
 void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
@@ -1060,28 +1073,56 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 	}
 
 	else if (nIDEvent == 2){
-		// 车
+		// 车的三个状态，此处不能动
 		for (unsigned i = 0; i < m_Car.size(); ++i){
 			if (m_Car.at(i).flagEnd)
 				m_Car.at(i).Disappear();
-			else if (m_Car.at(i).flagStop)
-				m_Car.at(i).Stop();
-			else
-				m_Car.at(i).Move();
+			else{
+				m_Car.at(i).LightState();	// 先执行相位判断
+				if (m_Car.at(i).flagStop)
+					m_Car.at(i).Stop();
+				else
+					m_Car.at(i).Move();
+			}
 		}
 
 		// 灯
-		for (unsigned i = 0; i < m_Light.size(); ++i){
+		/*for (unsigned i = 0; i < m_Light.size(); ++i){
 			m_Light.at(i).ChangeLightColor();
-		}
+			}*/
 		CFormView::OnTimer(nIDEvent);
 	}
 
 	// 模拟真实时间
 	else if (nIDEvent == 3){
+
+#ifndef COMMENT_LINE3
+		// 模拟随机投放
 		Car car;
 		car.CreateCar(rand() % 20 + 1, (rand() % 15 + 10) / 10.0);
 		m_Car.push_back(car);
+#endif
+
+		// 相位控制随时间变化，代码块在这
+		ClockState += CLOCK_ELAPSE_TIME / 1000.0;
+		switch ((int(ClockState) / 10)%4)
+		{
+		case 0:
+			SelecetState(3);
+			break;
+		case 1:
+			SelecetState(4);
+			break;
+		case 2:
+			SelecetState(1);
+			break;
+		case 3:
+			SelecetState(2);
+			break;
+		default:
+			break;
+		}
+		
 
 		// 清除 GeoEvent
 		if (MoTrackingLayer.GetEventCount() > 1000)
@@ -1097,12 +1138,94 @@ void CVS2013_MO_DEMOView::OnTestStoptest()
 	KillTimer(3);
 }
 
+/////////////////////////////相位控制/////////////////////////////////////////////
+/*
+*	相位状态映射到每个 Car 对象的 flagLightStop 变量，此变量+车与红绿灯的位置判断决定车是否停止
+*	以及红绿灯的状态（红绿灯编号逆时针：12 56 43 87）
+*/
+void CVS2013_MO_DEMOView::SelecetState(int state)
+{
+	switch (state)	// state 为相位代号
+	{
+	case 1:
+		// 车
+		for (unsigned i = 0; i < m_Car.size(); ++i){
+			int tmp = m_Car.at(i).lneNum;
+			if ((tmp >= 11 && tmp <= 20))
+				m_Car.at(i).flagLightStop = FALSE;
+			else
+				m_Car.at(i).flagLightStop = TRUE;
+		}
+
+		// 灯（6 7绿 其余红）
+		for (unsigned i = 0; i < m_Light.size(); ++i){
+			if (i == 5 || i == 6) m_Light.at(i).ChangeLightColor(short(1));
+			else m_Light.at(i).ChangeLightColor(short(0));
+		}
+
+		break;
+	case 2:
+		// 车（1 5 6 10）
+		for (unsigned i = 0; i < m_Car.size(); ++i){
+			int tmp = m_Car.at(i).lneNum;
+			if (tmp == 1 || tmp == 5 || tmp == 6 || tmp == 10)
+				m_Car.at(i).flagLightStop = FALSE;
+			else
+				m_Car.at(i).flagLightStop = TRUE;
+		}
+
+		// 灯（1 4绿 其余红）
+		for (unsigned i = 0; i < m_Light.size(); ++i){
+			if (i == 0 || i == 3) m_Light.at(i).ChangeLightColor(short(1));
+			else m_Light.at(i).ChangeLightColor(short(0));
+		}
+
+		break;
+	case 3:
+		// 车
+		for (unsigned i = 0; i < m_Car.size(); ++i){
+			int tmp = m_Car.at(i).lneNum;
+			if ((tmp >= 1 && tmp <= 10))
+				m_Car.at(i).flagLightStop = FALSE;
+			else
+				m_Car.at(i).flagLightStop = TRUE;
+		}
+
+		// 灯(2 3绿 其余红)
+		for (unsigned i = 0; i < m_Light.size(); ++i){
+			if (i == 1 || i == 2) m_Light.at(i).ChangeLightColor(short(1));
+			else m_Light.at(i).ChangeLightColor(short(0));
+		}
+
+		break;
+	case 4:
+		// 车（11 15 16 20）
+		for (unsigned i = 0; i < m_Car.size(); ++i){
+			int tmp = m_Car.at(i).lneNum;
+			if (tmp == 11 || tmp == 15 || tmp == 16 || tmp == 20)
+				m_Car.at(i).flagLightStop = FALSE;
+			else
+				m_Car.at(i).flagLightStop = TRUE;
+		}
+
+		// 灯（5 8绿 其余红）
+		for (unsigned i = 0; i < m_Light.size(); ++i){
+			if (i == 4|| i == 7) m_Light.at(i).ChangeLightColor(short(1));
+			else m_Light.at(i).ChangeLightColor(short(0));
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 
 /////////////////////////////汽车类实现/////////////////////////////////////////////
 Car::Car()
 {
 	flagStop = FALSE;
 	flagEnd = FALSE;
+	flagLightStop = FALSE;
 }
 Car::~Car()
 {
@@ -1140,7 +1263,7 @@ void Car::CreateCar(int lNum, double dis)
 	++TotalCarNum;
 }
 
-void Car::Move()
+void Car::Move()	// 判断车的状态+移动
 {
 	curPos = nexPos;
 	if (ptsInd < divNum){
@@ -1148,15 +1271,55 @@ void Car::Move()
 		nexPos.y = pts.Item(COleVariant(long(ptsInd))).GetY();
 		++ptsInd;
 	}
-	else{
-		flagStop = TRUE;
+	else
 		flagEnd = TRUE;
-	}
 
 	// 设置角度 ???
 	/*double ang = 180.0 / PI*atan((nexPos.y - curPos.y) / (nexPos.x - curPos.x));
 	MoTrackingLayer.GetSymbol(carInd).SetRotation(ang);*/
 	evnt.MoveTo(nexPos.x, nexPos.y);
+}
+void Car::LightState()
+{
+	// 相位+车位置的判断
+	if (flagLightStop){	// 相位
+		switch ((lneNum - 1) / 5)	// 车位置的判断
+		{
+		case 0:
+			if (curPos.x < LIGHT[0] && curPos.x > LIGHT[0] - TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+			break;
+		case 1:
+			if (curPos.x > LIGHT[1] && curPos.x < LIGHT[1] + TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+			break;
+		case 2:
+			if (curPos.y < LIGHT[2] && curPos.y > LIGHT[2] - TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+			break;
+		case 3:
+			if (curPos.y > LIGHT[3] && curPos.y < LIGHT[3] + TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+			break;
+		default:
+			break;
+		}
+	}
+	else
+		flagStop = FALSE;
+}
+
+void Car::Bump()
+{
+	// 检验碰撞代码
 }
 
 void Car::Stop()
@@ -1191,6 +1354,9 @@ TrafficLight::~TrafficLight()
 
 void TrafficLight::CreateLight(Pos pt1, Pos pt2)
 {
+	// 这两行代码为补充，非设计（待重构）
+	ptOri = pt1;
+	ptEnd = pt2;
 	// 设置定位点
 	lne.CreateDispatch("MapObjects2.Line");
 	CMoPoint pt;
@@ -1211,7 +1377,8 @@ void TrafficLight::CreateLight(Pos pt1, Pos pt2)
 	evnt = MoTrackingLayer.AddEvent(lne, rand() % LIGHT_COLOR_NUM + CAR_COLOR_NUM);
 }
 
-void TrafficLight::ChangeLightColor()
+void TrafficLight::ChangeLightColor(short id)
 {
-	evnt.SetSymbolIndex(rand() % LIGHT_COLOR_NUM + CAR_COLOR_NUM);
+//	evnt.SetSymbolIndex(rand() % LIGHT_COLOR_NUM + CAR_COLOR_NUM); // 随机
+	evnt.SetSymbolIndex(id + CAR_COLOR_NUM);					   // id控制
 }

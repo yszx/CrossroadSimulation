@@ -6,16 +6,37 @@
 #include <vector>
 using namespace std;
 
-// 一些自定义常量和头文件
-#define CAR_COLOR_NUM	5	
-#define LIGHT_COLOR_NUM 3
-#define LAYER_NUM		4			// 十字路口的图层数目
-#define PI				3.141592
-#define ELAPSE_TIME		50			// 定时器间隔(ms)
+// 结构体
+struct Pos
+{
+	double x;
+	double y;
+};
+struct CrossRoad
+{
+	float rd_wid;
+	int rd_lnm, rd_rnm;			// 左右道路的道路数
+	float rd_xlen, rd_ylen;		// x y 方向上的长度
+	float rd_sidwk_wid;			// 人行道宽度
+	float rd_arc;				// 圆角半径，默认等于人行道宽度
+	float rd_cen_wid;			// 中心线间隔
+};
 
-#define INFX			999999
-#define INFY			999999
+// 一些常量
+#define CAR_COLOR_NUM		5	
+#define LIGHT_COLOR_NUM		3
+#define LAYER_NUM			4				// 十字路口的图层数目
+#define PI					3.141592
+#define CAR_ELAPSE_TIME		50				// 定时器间隔(ms)-车
+#define CLOCK_ELAPSE_TIME	250				// 时钟间隔(ms)
+#define CAR_DEFAULT_SIZE	20
+#define TEST_VALUE			5
 
+#define INFX				999999
+#define INFY				999999
+
+
+static double LIGHT[4];						// 红绿灯的四个标识点（由于灯类无法访问View类）
 static vector<CMoLine>	MoTrackLine;		// 轨迹线
 static vector<CMoLine>	MoTrafficLight;		// 红绿灯
 static CMoTrackingLayer MoTrackingLayer;	// 挂接图层
@@ -26,21 +47,7 @@ static COLORREF CarColor[CAR_COLOR_NUM] =
 static COLORREF LightColor[LIGHT_COLOR_NUM] =
 { RGB(255, 0, 0), RGB(0, 255, 0), RGB(255, 255, 0) };
 
-struct Pos
-{
-	double x;
-	double y;
-};
-
-struct CrossRoad
-{
-	float rd_wid;
-	int rd_lnm, rd_rnm;			// 左右道路的道路数
-	float rd_xlen, rd_ylen;		// x y 方向上的长度
-	float rd_sidwk_wid;			// 人行道宽度
-	float rd_arc;				// 圆角半径，默认等于人行道宽度
-	float rd_cen_wid;			// 中心线间隔
-};
+// 类
 class Car
 {
 public:
@@ -50,8 +57,6 @@ public:
 private:
 	// 成员变量
 	Pos startPos;		// 起始位置
-	Pos	curPos, nexPos;	// 当前位置、下一位置
-	int lneNum;			// 路线编号
 	CMoLine lne;		// 路线
 	CMoPoints pts;		// 轨迹离散点集
 	int ptsInd;			// 点集的索引号
@@ -64,7 +69,10 @@ private:
 	int divNum;			// 行驶的步数
 
 public:
-	BOOL flagStop;			// 停止标志
+	Pos	curPos, nexPos;		// 当前位置、下一位置
+	int lneNum;				// 路线编号
+	BOOL flagStop;			// 停止标志（立即停止）
+	BOOL flagLightStop;		// 停止标志（红灯停止，相位决定）
 	BOOL flagEnd;			// 末尾标志
 	// 函数
 	void CreateCar(int lNum = 1, double dis = 1);	
@@ -74,19 +82,20 @@ public:
 	void Stop();		// 停止
 	void Start();		// 启动
 	void Disappear();	// 消失
+	void LightState();	// 针对相位
+	void Bump();		// 碰撞检测
 	void Acc();			// 加速
 	void Dec();			// 减速
 };
 
-
-
 class TrafficLight
 {
 public:
+	Pos ptOri, ptEnd;	// 标识点
 	TrafficLight();
 	~TrafficLight();
 	void CreateLight(Pos pt1, Pos pt2);		// 显示创建
-	void ChangeLightColor();	// 设置灯的颜色
+	void ChangeLightColor(short id = 0);	// 设置灯的颜色 id：0-红 1-绿 2-黄
 
 private:
 	CMoLine lne;		// 红绿灯对应的线
@@ -94,5 +103,5 @@ private:
 	CMoGeoEvent evnt;	// 事件
 };
 
-
+static vector<Car>				m_Car;		// 车容器
 #endif
