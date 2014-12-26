@@ -30,6 +30,7 @@ struct CrossRoad
 #define CAR_ELAPSE_TIME		50				// 定时器间隔(ms)-车
 #define CLOCK_ELAPSE_TIME	250				// 时钟间隔(ms)
 #define CAR_DEFAULT_SIZE	20
+#define CAR_DEFAULT_DIS		8
 #define TEST_VALUE			5
 
 #define INFX				999999
@@ -69,6 +70,8 @@ private:
 	int divNum;			// 行驶的步数
 
 public:
+	int state;			// 所处的相位，用于处理相位逻辑
+	BOOL InOneWay(int l1, int l2);		// 是否在同一跑道上
 	Pos	curPos, nexPos;		// 当前位置、下一位置
 	int lneNum;				// 路线编号
 	BOOL flagStop;			// 停止标志（立即停止）

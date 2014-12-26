@@ -561,6 +561,9 @@ CVS2013_MO_DEMOView::~CVS2013_MO_DEMOView()
 	if (m_dataCon) delete[] m_dataCon;
 	if (m_desc) delete[] m_desc;
 	if (m_layer) delete[] m_layer;
+
+	MoTrackingLayer.ClearEvents();
+	m_Car.clear();						// 
 }
 
 BOOL CVS2013_MO_DEMOView::getTrackLine()
@@ -990,9 +993,9 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 
 #ifndef COMMENT_LINE2
 	// 创建车辆
-	for (int i = 10; i < 15; ++i){
+	for (int i = 6; i <= 6; ++i){
 		Car car;
-		car.CreateCar(i + 1, (rand() % 15 + 10) / 10.0);
+		car.CreateCar(i, (rand() % 15 + 10) / 10.0);
 		m_Car.push_back(car);
 	}
 #endif
@@ -1079,6 +1082,7 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 				m_Car.at(i).Disappear();
 			else{
 				m_Car.at(i).LightState();	// 先执行相位判断
+				m_Car.at(i).Bump();			// 碰撞判断
 				if (m_Car.at(i).flagStop)
 					m_Car.at(i).Stop();
 				else
@@ -1099,8 +1103,16 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 #ifndef COMMENT_LINE3
 		// 模拟随机投放
 		Car car;
-		car.CreateCar(rand() % 20 + 1, (rand() % 15 + 10) / 10.0);
-		m_Car.push_back(car);
+		
+		int rdNum = rand() % 20 + 1;
+		int tmp = rdNum % 10;
+		if (tmp == 2 || tmp == 4 || tmp == 7 || tmp == 9){
+
+		}
+		else{
+			car.CreateCar(rdNum, 1);
+			m_Car.push_back(car);
+		}
 #endif
 
 		// 相位控制随时间变化，代码块在这
@@ -1111,13 +1123,13 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 			SelecetState(3);
 			break;
 		case 1:
-			SelecetState(4);
+			SelecetState(2);
 			break;
 		case 2:
 			SelecetState(1);
 			break;
 		case 3:
-			SelecetState(2);
+			SelecetState(4);
 			break;
 		default:
 			break;
@@ -1150,11 +1162,17 @@ void CVS2013_MO_DEMOView::SelecetState(int state)
 	case 1:
 		// 车
 		for (unsigned i = 0; i < m_Car.size(); ++i){
-			int tmp = m_Car.at(i).lneNum;
-			if ((tmp >= 11 && tmp <= 20))
-				m_Car.at(i).flagLightStop = FALSE;
+			//int tmp = m_Car.at(i).lneNum;
+			//if ((tmp >= 11 && tmp <= 20))
+			//	m_Car.at(i).flagLightStop = FALSE;
+			//else
+			//	m_Car.at(i).flagLightStop = TRUE;
+			//if (m_Car.at(i).state != 1)
+			//	m_Car.at(i).flagLightStop = TRUE;	// 相位逻辑 =_=
+			if (m_Car.at(i).state == 1)
+				m_Car.at(i).flagLightStop = FALSE;	// 相位逻辑 =_=
 			else
-				m_Car.at(i).flagLightStop = TRUE;
+				m_Car.at(i).flagLightStop = TRUE;	// 相位逻辑 =_=
 		}
 
 		// 灯（6 7绿 其余红）
@@ -1167,11 +1185,15 @@ void CVS2013_MO_DEMOView::SelecetState(int state)
 	case 2:
 		// 车（1 5 6 10）
 		for (unsigned i = 0; i < m_Car.size(); ++i){
-			int tmp = m_Car.at(i).lneNum;
+			/*int tmp = m_Car.at(i).lneNum;
 			if (tmp == 1 || tmp == 5 || tmp == 6 || tmp == 10)
-				m_Car.at(i).flagLightStop = FALSE;
+			m_Car.at(i).flagLightStop = FALSE;
 			else
-				m_Car.at(i).flagLightStop = TRUE;
+			m_Car.at(i).flagLightStop = TRUE;*/
+			if (m_Car.at(i).state == 2)
+				m_Car.at(i).flagLightStop = FALSE;	// 相位逻辑 =_=
+			else
+				m_Car.at(i).flagLightStop = TRUE;	// 相位逻辑 =_=
 		}
 
 		// 灯（1 4绿 其余红）
@@ -1184,11 +1206,17 @@ void CVS2013_MO_DEMOView::SelecetState(int state)
 	case 3:
 		// 车
 		for (unsigned i = 0; i < m_Car.size(); ++i){
-			int tmp = m_Car.at(i).lneNum;
-			if ((tmp >= 1 && tmp <= 10))
-				m_Car.at(i).flagLightStop = FALSE;
+			//int tmp = m_Car.at(i).lneNum;
+			//if ((tmp >= 1 && tmp <= 10))
+			//	m_Car.at(i).flagLightStop = FALSE;
+			//else
+			//	m_Car.at(i).flagLightStop = TRUE;
+			//if (m_Car.at(i).state != 3)
+			//	m_Car.at(i).flagLightStop = TRUE;	// 相位逻辑 =_=
+			if (m_Car.at(i).state == 3)
+				m_Car.at(i).flagLightStop = FALSE;	// 相位逻辑 =_=
 			else
-				m_Car.at(i).flagLightStop = TRUE;
+				m_Car.at(i).flagLightStop = TRUE;	// 相位逻辑 =_=
 		}
 
 		// 灯(2 3绿 其余红)
@@ -1201,11 +1229,17 @@ void CVS2013_MO_DEMOView::SelecetState(int state)
 	case 4:
 		// 车（11 15 16 20）
 		for (unsigned i = 0; i < m_Car.size(); ++i){
-			int tmp = m_Car.at(i).lneNum;
-			if (tmp == 11 || tmp == 15 || tmp == 16 || tmp == 20)
-				m_Car.at(i).flagLightStop = FALSE;
+			//int tmp = m_Car.at(i).lneNum;
+			//if (tmp == 11 || tmp == 15 || tmp == 16 || tmp == 20)
+			//	m_Car.at(i).flagLightStop = FALSE;
+			//else
+			//	m_Car.at(i).flagLightStop = TRUE;
+			//if (m_Car.at(i).state != 4)
+			//	m_Car.at(i).flagLightStop = TRUE;	// 相位逻辑 =_=
+			if (m_Car.at(i).state == 4)
+				m_Car.at(i).flagLightStop = FALSE;	// 相位逻辑 =_=
 			else
-				m_Car.at(i).flagLightStop = TRUE;
+				m_Car.at(i).flagLightStop = TRUE;	// 相位逻辑 =_=
 		}
 
 		// 灯（5 8绿 其余红）
@@ -1227,10 +1261,12 @@ Car::Car()
 	flagEnd = FALSE;
 	flagLightStop = FALSE;
 }
+
 Car::~Car()
 {
 
 }
+
 void Car::CreateCar(int lNum, double dis)
 {
 	lneNum = lNum;
@@ -1259,8 +1295,17 @@ void Car::CreateCar(int lNum, double dis)
 	startPos.x = pts.Item(COleVariant(long(ptsInd))).GetX();
 	startPos.y = pts.Item(COleVariant(long(ptsInd))).GetY();
 	evnt.MoveTo(startPos.x, startPos.y);
-
 	++TotalCarNum;
+
+	// 相位 （lNum -> State）
+	if ((lneNum >= 12 && lneNum <= 14) || (lneNum >= 17 && lneNum <= 19))
+		state = 1;
+	if ((lneNum >= 2 && lneNum <= 4) || (lneNum >= 7 && lneNum <= 9))
+		state = 3;
+	if (lneNum ==1 || lneNum == 5 || lneNum == 6 || lneNum == 10)
+		state = 2;
+	if (lneNum == 11 || lneNum == 15 || lneNum == 16 || lneNum == 20)
+		state = 4;
 }
 
 void Car::Move()	// 判断车的状态+移动
@@ -1271,14 +1316,20 @@ void Car::Move()	// 判断车的状态+移动
 		nexPos.y = pts.Item(COleVariant(long(ptsInd))).GetY();
 		++ptsInd;
 	}
-	else
+	else{
+		curPos.x = INFX;
+		curPos.y = INFY;
+		nexPos.x = INFX;
+		nexPos.y = INFY;
 		flagEnd = TRUE;
+	}
 
 	// 设置角度 ???
 	/*double ang = 180.0 / PI*atan((nexPos.y - curPos.y) / (nexPos.x - curPos.x));
 	MoTrackingLayer.GetSymbol(carInd).SetRotation(ang);*/
 	evnt.MoveTo(nexPos.x, nexPos.y);
 }
+
 void Car::LightState()
 {
 	// 相位+车位置的判断
@@ -1317,14 +1368,39 @@ void Car::LightState()
 		flagStop = FALSE;
 }
 
+BOOL Car::InOneWay(int l1, int l2)
+{
+	if (l1 == l2)	
+		return TRUE;
+	if (abs(l1 - l2) > 1)
+		return FALSE;
+	if (l1 % 5 == 3 || l2 % 5 == 3)
+		return FALSE;
+	return TRUE;
+}
+
 void Car::Bump()
 {
 	// 检验碰撞代码
+	if (flagStop == FALSE){
+		double judNum = CAR_DEFAULT_DIS*CAR_DEFAULT_DIS;
+		for (int i = 0; i < carInd; ++i){
+			if (InOneWay(m_Car.at(i).lneNum, lneNum)){	// 表示在同一跑道上
+				Pos tmp = m_Car.at(i).curPos;
+				double res = (curPos.x - tmp.x)*(curPos.x - tmp.x) +
+					(curPos.y - tmp.y)*(curPos.y - tmp.y);
+				if (res <= judNum){
+					flagStop = TRUE;
+					break;
+				}
+			}
+		}
+	}
 }
 
 void Car::Stop()
 {
-	evnt.MoveTo(curPos.x, curPos.y);
+	evnt.MoveTo(nexPos.x, nexPos.y);
 }
 
 void Car::Start()
