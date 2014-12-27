@@ -22,13 +22,9 @@ public:
 	void SelecetState(int state = 3);	// 全局函数，相位控制
 	//  [12/25/2014 guojianzhu]
 	//friend class Car;
-	vector<TrafficLight>	m_Light;		// 灯容器
 	//  [12/24/2014 guojianzhu]
 	vector<CMoPoints>	m_TrackPoints;		// 轨迹点
 	
-
-	//  [12/21/2014 guojianzhu]
-	CrossRoad m_crsRd;	// 道路数据结构体
 
 	unsigned int		m_lyrNum;	// 图层个数
 	CMoDataConnection*	m_dataCon;

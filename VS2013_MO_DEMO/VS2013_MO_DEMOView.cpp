@@ -947,15 +947,22 @@ BOOL CVS2013_MO_DEMOView::createCrossRoad()
 BOOL CVS2013_MO_DEMOView::initTrakingLayer()
 {
 	MoTrackingLayer = m_map.GetTrackingLayer();	// 获取 MoTrackingLayer，使用全局变量存储
-	int tmp = CAR_COLOR_NUM + LIGHT_COLOR_NUM + ANGLE_NUM*CAR_COLOR_NUM;
+	int tmp = CAR_COLOR_NUM + LIGHT_COLOR_NUM + ANGLE_NUM*CAR_COLOR_NUM + 1;
 	MoTrackingLayer.SetSymbolCount(tmp);
 
 	for (int i = 0; i < tmp; ++i){
 		CMoSymbol sym(MoTrackingLayer.GetSymbol(long(i)));
 
+		// 人
+		if (i == tmp - 1){
+			sym.SetSymbolType(0);
+			sym.SetSize(3);
+			sym.SetColor(RGB(255, 255, 0));
+			continue;
+		}
 		// 红绿灯种类
 		if (i >= CAR_COLOR_NUM && i < CAR_COLOR_NUM + LIGHT_COLOR_NUM){
-			sym.SetSymbolType(1);  // 符号默认为 1 （点状）
+			sym.SetSymbolType(1);  // 符号默认为 0 （点状）
 			sym.SetSize(3);
 			sym.SetColor(LightColor[i - CAR_COLOR_NUM]);
 		}
@@ -1025,10 +1032,17 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 
 #ifndef COMMENT_LINE2
 	// 创建车辆
-	for (int i = 6; i <= 6; ++i){
+	for (int i = 1; i <= 20; ++i){
 		Car car;
 		car.CreateCar(i, (rand() % 15 + 10) / 10.0);
 		m_Car.push_back(car);
+	}
+
+	// 创建人
+	for (int i = 1; i <= 8; ++i){
+		Person per;
+		per.CreatePerson(i);
+		m_Per.push_back(per);
 	}
 #endif
 
@@ -1089,9 +1103,19 @@ void CVS2013_MO_DEMOView::OnTestStarttest()	// 暂时调用所有测试函数
 		m_Light.push_back(light[i]);
 #endif
 
-	SetTimer(2, CAR_ELAPSE_TIME, NULL);
-	SetTimer(3, CLOCK_ELAPSE_TIME, NULL);
+	// 设置人行道标识数据
+	SIDEWALK[0] = m_crsRd.rd_ylen / 2 - m_crsRd.rd_wid*m_crsRd.rd_lnm;
+	SIDEWALK[1] = m_crsRd.rd_ylen / 2 + m_crsRd.rd_wid*m_crsRd.rd_lnm;
+	SIDEWALK[2] = m_crsRd.rd_xlen / 2 - m_crsRd.rd_wid*m_crsRd.rd_lnm;
+	SIDEWALK[3] = m_crsRd.rd_xlen / 2 + m_crsRd.rd_wid*m_crsRd.rd_lnm;
+
+	
+	// 人、车
+	SetTimer(2, DEF_ELAPSE_TIME, NULL);	  // 控制
+	// 红绿黄灯
 	SelecetState(3);	// 初始状态
+	STATE = 3;
+	SetTimer(3, CLOCK_ELAPSE_TIME, NULL); // 模拟投放
 }
 
 void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
@@ -1122,6 +1146,18 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 			}
 		}
 
+		for (unsigned i = 0; i < m_Per.size(); ++i){
+			if (m_Per.at(i).flagEnd)
+				m_Per.at(i).Disappear();
+			else{
+				m_Per.at(i).LightState();
+				if (m_Per.at(i).flagStop)
+					m_Per.at(i).Stop();
+				else
+					m_Per.at(i).Move();
+			}
+		}
+
 		// 灯
 		/*for (unsigned i = 0; i < m_Light.size(); ++i){
 			m_Light.at(i).ChangeLightColor();
@@ -1134,9 +1170,10 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 
 #ifndef COMMENT_LINE3
 		// 模拟随机投放
+		// 车
 		Car car;
 		
-		int rdNum = rand() % 20 + 1;
+		int rdNum = rand() % ROAD_NUM + 1;
 		int tmp = rdNum % 10;
 		if (tmp == 2 || tmp == 4 || tmp == 7 || tmp == 9){
 
@@ -1145,29 +1182,45 @@ void CVS2013_MO_DEMOView::OnTimer(UINT_PTR nIDEvent)
 			car.CreateCar(rdNum, 1);
 			m_Car.push_back(car);
 		}
+
+		// 人
+		static int perNum;
+		perNum++;
+		if (perNum % 5 == 0){
+			Person per;
+
+			rdNum = rand() % WALK_NUM + 1;
+			per.CreatePerson(rdNum);
+			m_Per.push_back(per);
+		}
 #endif
 
 		// 相位控制随时间变化，代码块在这
+		// 黄灯？
 		ClockState += CLOCK_ELAPSE_TIME / 1000.0;
-		switch ((int(ClockState) / 10)%4)
+		CLOCK_PRO = double(int(ClockState) % CLOCK_CYCLE);
+		switch ((int(ClockState) / CLOCK_CYCLE) % 4)
 		{
 		case 0:
 			SelecetState(3);
+			STATE = 3;
 			break;
 		case 1:
 			SelecetState(2);
+			STATE = 2;
 			break;
 		case 2:
 			SelecetState(1);
+			STATE = 1;
 			break;
 		case 3:
 			SelecetState(4);
+			STATE = 4;
 			break;
 		default:
 			break;
 		}
 		
-
 		// 清除 GeoEvent
 		if (MoTrackingLayer.GetEventCount() > 1000)
 			MoTrackingLayer.ClearEvents();
@@ -1280,6 +1333,15 @@ void CVS2013_MO_DEMOView::SelecetState(int state)
 			else m_Light.at(i).ChangeLightColor(short(0));
 		}
 		break;
+
+	case 5:
+		// 对人车做判断
+		// ...
+		// 全部黄灯
+		for (unsigned i = 0; i < m_Light.size(); ++i){
+			m_Light.at(i).ChangeLightColor(short(2));
+		}
+		break;
 	default:
 		break;
 	}
@@ -1314,6 +1376,8 @@ void Car::CreateCar(int lNum, double dis)
 
 	symColorInd = rand() % CAR_COLOR_NUM;
 	evnt = MoTrackingLayer.AddEvent(pt, symColorInd);
+	evntNum = EventNum;
+	EventNum++;
 
 	// 根据线获取点集
 	pts.CreateDispatch(TEXT("MapObjects2.Points"));
@@ -1367,7 +1431,7 @@ void Car::Move()	// 判断车的状态+移动
 	if (lneNum <= 5) initAng = 90;
 	else if (lneNum <= 10) initAng = -90;
 	else if (lneNum <= 15) initAng = 90;
-	else initAng = -90;					
+	else initAng = -90;		
 	
 	if (nexPos.x != curPos.x)
 		ang = 180.0 / PI*atan((nexPos.y - curPos.y) / (nexPos.x - curPos.x)) + initAng;
@@ -1386,25 +1450,25 @@ void Car::LightState()
 		switch ((lneNum - 1) / 5)	// 车位置的判断
 		{
 		case 0:
-			if (curPos.x < LIGHT[0] && curPos.x > LIGHT[0] - TEST_VALUE)
+			if (curPos.x < LIGHT[0] && curPos.x > LIGHT[0] - CAR_TEST_VALUE)
 				flagStop = TRUE;
 			else
 				flagStop = FALSE;
 			break;
 		case 1:
-			if (curPos.x > LIGHT[1] && curPos.x < LIGHT[1] + TEST_VALUE)
+			if (curPos.x > LIGHT[1] && curPos.x < LIGHT[1] + CAR_TEST_VALUE)
 				flagStop = TRUE;
 			else
 				flagStop = FALSE;
 			break;
 		case 2:
-			if (curPos.y < LIGHT[2] && curPos.y > LIGHT[2] - TEST_VALUE)
+			if (curPos.y < LIGHT[2] && curPos.y > LIGHT[2] - CAR_TEST_VALUE)
 				flagStop = TRUE;
 			else
 				flagStop = FALSE;
 			break;
 		case 3:
-			if (curPos.y > LIGHT[3] && curPos.y < LIGHT[3] + TEST_VALUE)
+			if (curPos.y > LIGHT[3] && curPos.y < LIGHT[3] + CAR_TEST_VALUE)
 				flagStop = TRUE;
 			else
 				flagStop = FALSE;
@@ -1461,6 +1525,7 @@ void Car::Disappear()
 {
 	//MoTrackingLayer.RemoveEvent(carInd);
 	evnt.MoveTo(INFX, INFY);	// 此种行为应该受到鄙视。。。但对内存释放机制不熟悉，所以==先将就咯
+	//MoTrackingLayer.RemoveEvent(evntNum);
 }
 
 void Car::ChangeColor()
@@ -1500,10 +1565,249 @@ void TrafficLight::CreateLight(Pos pt1, Pos pt2)
 
 	// 事件
 	evnt = MoTrackingLayer.AddEvent(lne, rand() % LIGHT_COLOR_NUM + CAR_COLOR_NUM);
+	evntNum = EventNum;
+	EventNum++;
 }
 
 void TrafficLight::ChangeLightColor(short id)
 {
 //	evnt.SetSymbolIndex(rand() % LIGHT_COLOR_NUM + CAR_COLOR_NUM); // 随机
 	evnt.SetSymbolIndex(id + CAR_COLOR_NUM);					   // id控制
+}
+
+/////////////////////////////人类/////////////////////////////////////////////
+Person::Person()
+{
+	pts.CreateDispatch("MapObjects2.Points");
+	lne.CreateDispatch("MapObjects2.Line");
+	lneNum = rand() % WALK_NUM + 1;
+	dis = 0.2;
+	flagStop = FALSE;
+	flagEnd = FALSE;
+	ptsInd = 0;
+}
+
+Person::~Person()
+{
+}
+
+void Person::Move()
+{
+	curPos = nexPos;
+	int tmp = long((1.0 / 2 + 1.0 / DIV_NUM)*divNum);
+	if (ptsInd < tmp){
+		nexPos.x = pts.Item(COleVariant(long(ptsInd))).GetX();
+		nexPos.y = pts.Item(COleVariant(long(ptsInd))).GetY();
+		++ptsInd;
+	}
+	else{
+		curPos.x = INFX;
+		curPos.y = INFY;
+		nexPos.x = INFX;
+		nexPos.y = INFY;
+		flagEnd = TRUE;
+	}
+	evnt.MoveTo(nexPos.x, nexPos.y);
+}
+
+void Person::Stop()
+{
+	evnt.MoveTo(nexPos.x, nexPos.y);
+}
+
+void Person::Disappear()
+{
+	evnt.MoveTo(INFX, INFY);
+	//MoTrackingLayer.RemoveEvent(evntNum);
+}
+
+void Person::LightState()
+{
+	double torProTme = 9;	// 时间限度
+	// 1 相位
+	if (STATE == 1){
+		if (lneNum == 5 || lneNum == 7){
+			if ((curPos.x <SIDEWALK[2] && curPos.x > SIDEWALK[2] - PER_TEST_VALUE))
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+		else if (lneNum == 6 || lneNum == 8){
+			if (curPos.x > SIDEWALK[3] && curPos.x < SIDEWALK[3] + PER_TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+		// 判断行人是否能通过 CLOCK_PRO < torProTme
+		else if (lneNum == 1 || lneNum == 3){
+			if (curPos.y <SIDEWALK[0] && curPos.y > SIDEWALK[0] - PER_TEST_VALUE
+				&& CLOCK_PRO > torProTme)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+		else if (lneNum == 2 || lneNum == 4){
+			if (curPos.y > SIDEWALK[1] && curPos.y < SIDEWALK[1] + PER_TEST_VALUE
+				&& CLOCK_PRO > torProTme)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+	}
+	// 3 相位
+	else if (STATE == 3){
+		if (lneNum == 1 || lneNum == 3){
+			if (curPos.y <SIDEWALK[0] && curPos.y > SIDEWALK[0] - PER_TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+		else if (lneNum == 2 || lneNum == 4){
+			if (curPos.y > SIDEWALK[1] && curPos.y < SIDEWALK[1] + PER_TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+		// 判断行人是否能通过 CLOCK_PRO < torProTme
+		else if (lneNum == 5 || lneNum == 7){
+			if (curPos.x <SIDEWALK[2] && curPos.x > SIDEWALK[2] - PER_TEST_VALUE
+				&& CLOCK_PRO > torProTme)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+		else if (lneNum == 6 || lneNum == 8){
+			if (curPos.x > SIDEWALK[3] && curPos.x < SIDEWALK[3] + PER_TEST_VALUE
+				&& CLOCK_PRO > torProTme)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+	}
+	// 2 4 相位
+	else{
+		if (lneNum == 5 || lneNum == 7){
+			if (curPos.x <SIDEWALK[2] && curPos.x > SIDEWALK[2] - PER_TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+		else if (lneNum == 6 || lneNum == 8){
+			if (curPos.x > SIDEWALK[3] && curPos.x < SIDEWALK[3] + PER_TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+		else if (lneNum == 1 || lneNum == 3){
+			if (curPos.y <SIDEWALK[0] && curPos.y > SIDEWALK[0] - PER_TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+		else if (lneNum == 2 || lneNum == 4){
+			if (curPos.y > SIDEWALK[1] && curPos.y < SIDEWALK[1] + PER_TEST_VALUE)
+				flagStop = TRUE;
+			else
+				flagStop = FALSE;
+		}
+	}
+}
+
+void Person::CreatePerson(int lNum)
+{
+	lneNum = lNum;
+	CMoPoint pt[2];
+	for (int i = 0; i < 2; ++i)
+		pt[i].CreateDispatch("MapObjects2.Point");
+	double tmp = 0;
+
+	switch (lNum)
+	{
+	case 1:case 2:
+		tmp = m_crsRd.rd_xlen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid;
+		pt[0].SetX(tmp - RandGenerate(0, int(m_crsRd.rd_sidwk_wid)));
+		pt[1].SetX(tmp - RandGenerate(0, int(m_crsRd.rd_sidwk_wid)));
+		pt[0].SetY(0);
+		pt[1].SetY(m_crsRd.rd_ylen);
+		break;
+
+	case 3:case 4:
+		tmp = m_crsRd.rd_xlen / 2 + m_crsRd.rd_lnm*m_crsRd.rd_wid;
+		pt[0].SetX(tmp + RandGenerate(0, int(m_crsRd.rd_sidwk_wid)));
+		pt[1].SetX(tmp + RandGenerate(0, int(m_crsRd.rd_sidwk_wid)));
+		pt[0].SetY(0);
+		pt[1].SetY(m_crsRd.rd_ylen);
+		break;
+
+	case 5:case 6:
+		tmp = m_crsRd.rd_ylen / 2 - m_crsRd.rd_lnm*m_crsRd.rd_wid;
+		pt[0].SetY(tmp - RandGenerate(0, int(m_crsRd.rd_sidwk_wid)));
+		pt[1].SetY(tmp - RandGenerate(0, int(m_crsRd.rd_sidwk_wid)));
+		pt[0].SetX(0);
+		pt[1].SetX(m_crsRd.rd_xlen);
+		break;
+
+	case 7:case 8:
+		tmp = m_crsRd.rd_ylen / 2 + m_crsRd.rd_lnm*m_crsRd.rd_wid;
+		pt[0].SetY(tmp + RandGenerate(0, int(m_crsRd.rd_sidwk_wid)));
+		pt[1].SetY(tmp + RandGenerate(0, int(m_crsRd.rd_sidwk_wid)));
+		pt[0].SetX(0);
+		pt[1].SetX(m_crsRd.rd_xlen);
+		break;
+
+	default:
+		break;
+	}
+	if ((lNum%2) == 1){
+		GenerateLineAndPts(pt[0], pt[1]);
+
+		// 改变人的初始位置
+		ptsInd = long((1.0 / 2 - 1.0 / DIV_NUM)*divNum);
+		startPos.x = pts.Item(COleVariant(long(ptsInd))).GetX();
+		startPos.y = pts.Item(COleVariant(long(ptsInd))).GetY();
+		curPos = nexPos = startPos;
+
+		int tmp = CAR_COLOR_NUM + LIGHT_COLOR_NUM + ANGLE_NUM*CAR_COLOR_NUM + 1;
+		evnt = MoTrackingLayer.AddEvent(pt[0], tmp-1);
+	}
+	else {
+		GenerateLineAndPts(pt[1], pt[0]);
+
+		// 改变人的初始位置
+		ptsInd = long((1.0 / 2 - 1.0 / DIV_NUM)*divNum);
+		startPos.x = pts.Item(COleVariant(long(ptsInd))).GetX();
+		startPos.y = pts.Item(COleVariant(long(ptsInd))).GetY();
+		curPos = nexPos = startPos;
+
+		int tmp = CAR_COLOR_NUM + LIGHT_COLOR_NUM + ANGLE_NUM*CAR_COLOR_NUM + 1;
+		evnt = MoTrackingLayer.AddEvent(pt[1], tmp-1);
+		evntNum = EventNum;
+		EventNum++;
+	}
+
+	
+}
+
+double Person::RandGenerate(int a /* = 0 */, int b /* = 1 */)
+{
+	// 生成 0-1
+	double tmp = (rand() % RAND_MAX) / double(RAND_MAX);
+	return (b - a)*tmp + a;
+}
+
+void Person::GenerateLineAndPts(CMoPoint& pt1, CMoPoint& pt2)
+{
+	// 生成线	
+	CMoPoints ps;
+	ps.CreateDispatch("MapObjects2.Points");
+	ps.Add(pt1);
+	ps.Add(pt2);
+	lne.GetParts().Add(ps);
+
+	// 获取点集
+	divNum = int(lne.GetLength() / dis);
+	lne.SetMeasuresAsLength();
+	for (int i = 0; i < divNum;++i)
+		pts.Add(lne.ReturnPointEvents(dis*i).Item(COleVariant(long(0))));
+
 }

@@ -1,0 +1,125 @@
+﻿Build started 2014/12/27 15:31:11.
+     1>Project "F:\程序库\MO\程序\TransSimu_2\VS2013_MO_DEMO\VS2013_MO_DEMO.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /sdl /O2 /Oi /Oy- /GL /D WIN32 /D _WINDOWS /D NDEBUG /D _AFXDLL /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yc"stdafx.h" /Fp"Release\VS2013_MO_DEMO.pch" /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt stdafx.cpp
+         stdafx.cpp
+         I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /sdl /O2 /Oi /Oy- /GL /D WIN32 /D _WINDOWS /D NDEBUG /D _AFXDLL /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Yu"stdafx.h" /Fp"Release\VS2013_MO_DEMO.pch" /Fo"Release\\" /Fd"Release\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt MainFrm.cpp "MO Commons\font.cpp" "MO Commons\map.cpp" "MO Commons\MapHelper.cpp" "MO Commons\moaddresslocation.cpp" "MO Commons\mochartrenderer.cpp" "MO Commons\moclassbreaksrenderer.cpp" "MO Commons\modataconnection.cpp" "MO Commons\modatum.cpp" "MO Commons\modotdensityrenderer.cpp" "MO Commons\moellipse.cpp" "MO Commons\moeventrenderer.cpp" "MO Commons\mofield.cpp" "MO Commons\mofields.cpp" "MO Commons\mogeocoder.cpp" "MO Commons\mogeocoordsys.cpp" "MO Commons\mogeodataset.cpp" "MO Commons\mogeodatasets.cpp" "MO Commons\mogeoevent.cpp" "MO Commons\mogeotransformation.cpp" "MO Commons\mogrouprenderer.cpp" "MO Commons\moimagelayer.cpp" "MO Commons\molabelplacer.cpp" "MO Commons\molabelrenderer.cpp" "MO Commons\molayers.cpp" "MO Commons\moline.cpp" "MO Commons\momaplayer.cpp" "MO Commons\moparts.cpp" "MO Commons\moplacelocator.cpp" "MO Commons\mopoint.cpp" "MO Commons\mopoints.cpp" "MO Commons\mopolygon.cpp" "MO Commons\moprimemeridian.cpp" "MO Commons\moprojcoordsys.cpp" "MO Commons\moprojection.cpp" "MO Commons\morecordset.cpp" "MO Commons\morectangle.cpp" "MO Commons\mospheroid.cpp" "MO Commons\mostandardizer.cpp" "MO Commons\mostatistics.cpp" "MO Commons\mostrings.cpp" "MO Commons\mosymbol.cpp" "MO Commons\motable.cpp" "MO Commons\motabledesc.cpp" "MO Commons\motextsymbol.cpp" "MO Commons\motrackinglayer.cpp" "MO Commons\mounit.cpp" "MO Commons\movaluemaprenderer.cpp" "MO Commons\mozrenderer.cpp" VS2013_MO_DEMO.cpp VS2013_MO_DEMODoc.cpp VS2013_MO_DEMOView.cpp
+         MainFrm.cpp
+         font.cpp
+         map.cpp
+         MapHelper.cpp
+         moaddresslocation.cpp
+         mochartrenderer.cpp
+         moclassbreaksrenderer.cpp
+         modataconnection.cpp
+         modatum.cpp
+         modotdensityrenderer.cpp
+         moellipse.cpp
+         moeventrenderer.cpp
+         mofield.cpp
+         mofields.cpp
+         mogeocoder.cpp
+         mogeocoordsys.cpp
+         mogeodataset.cpp
+         mogeodatasets.cpp
+         mogeoevent.cpp
+         mogeotransformation.cpp
+         Compiling...
+         mogrouprenderer.cpp
+         moimagelayer.cpp
+         molabelplacer.cpp
+         molabelrenderer.cpp
+         molayers.cpp
+         moline.cpp
+         momaplayer.cpp
+         moparts.cpp
+         moplacelocator.cpp
+         mopoint.cpp
+         mopoints.cpp
+         mopolygon.cpp
+         moprimemeridian.cpp
+         moprojcoordsys.cpp
+         moprojection.cpp
+         morecordset.cpp
+         morectangle.cpp
+         mospheroid.cpp
+         mostandardizer.cpp
+         mostatistics.cpp
+         Compiling...
+         mostrings.cpp
+         mosymbol.cpp
+         motable.cpp
+         motabledesc.cpp
+         motextsymbol.cpp
+         motrackinglayer.cpp
+         mounit.cpp
+         movaluemaprenderer.cpp
+         mozrenderer.cpp
+         VS2013_MO_DEMO.cpp
+         VS2013_MO_DEMODoc.cpp
+         VS2013_MO_DEMOView.cpp
+       ResourceCompile:
+         C:\Program Files (x86)\Windows Kits\8.1\bin\x86\rc.exe /D NDEBUG /D _AFXDLL /l"0x0409" /IRelease\ /nologo /fo"Release\VS2013_MO_DEMO.res" VS2013_MO_DEMO.rc 
+       Link:
+         I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"F:\程序库\MO\程序\TransSimu_2\Release\VS2013_MO_DEMO.exe" /INCREMENTAL:NO /NOLOGO /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /manifestinput:"I:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\Include\Manifest\dpiaware.manifest" /DEBUG /PDB:"F:\程序库\MO\程序\TransSimu_2\Release\VS2013_MO_DEMO.pdb" /SUBSYSTEM:WINDOWS /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"F:\程序库\MO\程序\TransSimu_2\Release\VS2013_MO_DEMO.lib" /MACHINE:X86 /SAFESEH Release\VS2013_MO_DEMO.res
+         Release\MainFrm.obj
+         Release\font.obj
+         Release\map.obj
+         Release\MapHelper.obj
+         Release\moaddresslocation.obj
+         Release\mochartrenderer.obj
+         Release\moclassbreaksrenderer.obj
+         Release\modataconnection.obj
+         Release\modatum.obj
+         Release\modotdensityrenderer.obj
+         Release\moellipse.obj
+         Release\moeventrenderer.obj
+         Release\mofield.obj
+         Release\mofields.obj
+         Release\mogeocoder.obj
+         Release\mogeocoordsys.obj
+         Release\mogeodataset.obj
+         Release\mogeodatasets.obj
+         Release\mogeoevent.obj
+         Release\mogeotransformation.obj
+         Release\mogrouprenderer.obj
+         Release\moimagelayer.obj
+         Release\molabelplacer.obj
+         Release\molabelrenderer.obj
+         Release\molayers.obj
+         Release\moline.obj
+         Release\momaplayer.obj
+         Release\moparts.obj
+         Release\moplacelocator.obj
+         Release\mopoint.obj
+         Release\mopoints.obj
+         Release\mopolygon.obj
+         Release\moprimemeridian.obj
+         Release\moprojcoordsys.obj
+         Release\moprojection.obj
+         Release\morecordset.obj
+         Release\morectangle.obj
+         Release\mospheroid.obj
+         Release\mostandardizer.obj
+         Release\mostatistics.obj
+         Release\mostrings.obj
+         Release\mosymbol.obj
+         Release\motable.obj
+         Release\motabledesc.obj
+         Release\motextsymbol.obj
+         Release\motrackinglayer.obj
+         Release\mounit.obj
+         Release\movaluemaprenderer.obj
+         Release\mozrenderer.obj
+         Release\stdafx.obj
+         Release\VS2013_MO_DEMO.obj
+         Release\VS2013_MO_DEMODoc.obj
+         Release\VS2013_MO_DEMOView.obj
+         Generating code
+         Finished generating code
+         VS2013_MO_DEMO.vcxproj -> F:\程序库\MO\程序\TransSimu_2\Release\VS2013_MO_DEMO.exe
+     1>Done Building Project "F:\程序库\MO\程序\TransSimu_2\VS2013_MO_DEMO\VS2013_MO_DEMO.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:09.85

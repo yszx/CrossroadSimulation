@@ -23,21 +23,29 @@ struct CrossRoad
 };
 
 // 一些常量
+#define CLOCK_CYCLE			15	// 红绿灯周期
+#define DIV_NUM				6	// 行人的路程 2/DIV_NUM
+#define ROAD_NUM			20
+#define WALK_NUM			8
 #define CAR_COLOR_NUM		5	
 #define LIGHT_COLOR_NUM		3
 #define ANGLE_NUM			360
 #define LAYER_NUM			4				// 十字路口的图层数目
 #define PI					3.141592
-#define CAR_ELAPSE_TIME		50				// 定时器间隔(ms)-车
+#define DEF_ELAPSE_TIME		50				// 定时器间隔(ms)-车
 #define CLOCK_ELAPSE_TIME	250				// 时钟间隔(ms)
 #define CAR_DEFAULT_SIZE	20
 #define CAR_DEFAULT_DIS		8
-#define TEST_VALUE			5
+#define CAR_TEST_VALUE		5
+#define PER_TEST_VALUE		2.5
 
 #define INFX				999999
 #define INFY				999999
 
-
+static int EventNum;						// evnt 编号
+static double CLOCK_PRO = 0;				// 当前相位进行的时间
+static int STATE;							// 全局相位（目前用于人的行驶）
+static double SIDEWALK[4];					// 人行道标识
 static double LIGHT[4];						// 红绿灯的四个标识点（由于灯类无法访问View类）
 static vector<CMoLine>	MoTrackLine;		// 轨迹线
 static vector<CMoLine>	MoTrafficLight;		// 红绿灯
@@ -71,6 +79,7 @@ private:
 	int divNum;			// 行驶的步数
 
 public:
+	int evntNum;		// evnt 编号，唯一
 	int symColorInd;	// 颜色 Index
 	int state;			// 所处的相位，用于处理相位逻辑
 	BOOL InOneWay(int l1, int l2);		// 是否在同一跑道上
@@ -96,6 +105,7 @@ public:
 class TrafficLight
 {
 public:
+	int evntNum;		// evnt 编号，唯一
 	Pos ptOri, ptEnd;	// 标识点
 	TrafficLight();
 	~TrafficLight();
@@ -108,5 +118,38 @@ private:
 	CMoGeoEvent evnt;	// 事件
 };
 
-static vector<Car>				m_Car;		// 车容器
+class Person
+{
+public:
+	int evntNum;		// evnt 编号，唯一
+	BOOL flagStop;
+	BOOL flagEnd;
+	int ptsInd;
+	int divNum;
+	int state;			// 相位
+	int lneNum;			// 路线编号
+	double dis;			// 速度
+	Person();
+	~Person();
+	void Move();		// 移动
+	void Stop();
+	void Disappear();	// 消失
+	void LightState();	// 相位判断
+	void CreatePerson(int lNum = 1);
+	// 辅助函数（随机生成double型的数）
+	double RandGenerate(int a = 0, int b = 1);
+	void GenerateLineAndPts(CMoPoint& pt1, CMoPoint& pt2);
+
+private:
+	CMoGeoEvent evnt;
+	Pos startPos;
+	Pos curPos, nexPos;
+	CMoPoints pts;
+	CMoLine lne;
+};
+
+static vector<Car>	m_Car;		// 车容器
+static vector<Person> m_Per;	// 人容器
+static CrossRoad m_crsRd;		// 道路数据结构体
+static vector<TrafficLight>	m_Light;		// 灯容器
 #endif
